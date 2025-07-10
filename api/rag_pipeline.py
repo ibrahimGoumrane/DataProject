@@ -300,6 +300,7 @@ class RAGPipeline:
         Returns:
             str: Preprocessed and enhanced query
         """
+        processed_query = query.strip().lower()
         # 3. Add context keywords based on query type
         if question_type == 'procedural' or any(word in processed_query for word in ['how to', 'how do', 'steps']):
             processed_query += " , context : tutorial guide instructions steps process methodology"

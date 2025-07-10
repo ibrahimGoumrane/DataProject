@@ -70,5 +70,29 @@
     "source_url": "https://tailwindcss.com/blog/tailwindcss-v4",
     "total_chunks": 132,
     "storage_timestamp": "2025-07-10T18:59:21.846731"
+  },
+  "f939cdf2-19b5-48b6-b52c-00b387162ac7": {
+    "query": "Linkedin Page for user ibrahim goumrane",
+    "source_url": "https://www.linkedin.com/in/ibrahim-goumrane/",
+    "total_chunks": 112,
+    "storage_timestamp": "2025-07-10T19:17:47.112334"
+  },
+  "1e942d29-a1c5-45c2-8f44-c73a4fee3246": {
+    "query": "This is the setup of nextjs with tailwind css",
+    "source_url": "https://tailwindcss.com/docs/installation/framework-guides/nextjs",
+    "total_chunks": 125,
+    "storage_timestamp": "2025-07-10T19:22:26.468654"
+  },
+  "2c4cf2f7-2cba-43d5-81ff-fdd9e379ff4e": {
+    "query": "This is the home page of tailwind css",
+    "source_url": "https://tailwindcss.com/",
+    "total_chunks": 44,
+    "storage_timestamp": "2025-07-10T19:27:31.966004"
+  },
+  "37cc936d-c6bc-46c0-8016-b86338658944": {
+    "query": "This is the page for customizing ur styles in tailwind css",
+    "source_url": "https://tailwindcss.com/docs/adding-custom-styles",
+    "total_chunks": 95,
+    "storage_timestamp": "2025-07-10T19:32:30.046595"
   }
 }
