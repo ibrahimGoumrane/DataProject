@@ -4,7 +4,6 @@ Centralizes all environment variable handling and provides defaults.
 """
 
 import os
-from typing import Union
 from dotenv import load_dotenv
 
 # Load environment variables from .env file if it exists
@@ -25,7 +24,7 @@ class RAGConfig:
         self.MAX_CONTEXT_LENGTH = self._get_int('RAG_MAX_CONTEXT_LENGTH', 10000)
         self.MAX_TOKENS = self._get_int('RAG_MAX_TOKENS', 10000)
         self.TEMPERATURE = self._get_float('RAG_TEMPERATURE', 0.7)
-        self.MODEL_NAME = os.getenv('RAG_MODEL_NAME', 'gpt-4.1-nano')
+        self.MODEL_NAME = os.getenv('RAG_MODEL_NAME', 'o4-mini-2025-04-16')
         self.TOP_K_RESULTS = self._get_int('RAG_TOP_K_RESULTS', 10)
         
         # Data Processing Settings

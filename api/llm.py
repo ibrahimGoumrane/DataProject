@@ -59,7 +59,6 @@ class LLM:
             response = self.openai_client.responses.create(
                 model=self.modal,
                 input=messages,
-                temperature=self.config.TEMPERATURE,
                 max_output_tokens=self.config.MAX_TOKENS
             )
             return {

@@ -115,7 +115,7 @@ class RAGPipeline:
         print(f"🔍 Query complexity: {query_analysis['complexity_score']:.2f}, type: {query_analysis['question_type']}")
         
         # 1.5 Enhance query with preprocessing
-        enhanced_query = self.preprocess_query(query)
+        enhanced_query = self.preprocess_query(query , question_type=query_analysis.get('question_type', 'general') , entities=query_analysis.get('entities', []))
         print(f"🔄 Enhanced query: '{enhanced_query}'")
         
         # 2. Process the enhanced query
@@ -290,7 +290,7 @@ class RAGPipeline:
         
         return weighted_sum / weight_sum if weight_sum > 0 else 0.0
     
-    def preprocess_query(self, query: str) -> str:
+    def preprocess_query(self, query: str , question_type = "" , entities = [""]) -> str:
         """
         Advanced query preprocessing for better retrieval accuracy.
         
@@ -300,39 +300,18 @@ class RAGPipeline:
         Returns:
             str: Preprocessed and enhanced query
         """
-        # 1. Expand contractions
-        contractions = {
-            "what's": "what is", "how's": "how is", "where's": "where is",
-            "when's": "when is", "why's": "why is", "who's": "who is",
-            "can't": "cannot", "won't": "will not", "shouldn't": "should not",
-            "wouldn't": "would not", "couldn't": "could not", "doesn't": "does not",
-            "isn't": "is not", "aren't": "are not", "wasn't": "was not",
-            "weren't": "were not", "haven't": "have not", "hasn't": "has not",
-            "hadn't": "had not", "didn't": "did not", "don't": "do not"
-        }
-        
-        processed_query = query.lower()
-        for contraction, expansion in contractions.items():
-            processed_query = processed_query.replace(contraction, expansion)
-        
-        # 2. Get query type from enhancer
-        query_analysis = self.enhancer.analyze_query_complexity(query)
-        question_type = query_analysis.get('question_type', 'general')
-        
         # 3. Add context keywords based on query type
         if question_type == 'procedural' or any(word in processed_query for word in ['how to', 'how do', 'steps']):
-            processed_query += " tutorial guide instructions steps process methodology"
+            processed_query += " , context : tutorial guide instructions steps process methodology"
         elif question_type == 'definition' or any(word in processed_query for word in ['what is', 'define', 'definition']):
-            processed_query += " explanation meaning concept definition terminology"
+            processed_query += " , context : explanation meaning concept definition terminology"
         elif question_type == 'causal' or any(word in processed_query for word in ['why', 'because', 'reason']):
-            processed_query += " reason explanation cause effect result"
+            processed_query += " , context : reason explanation cause effect result"
         elif question_type == 'comparative' or any(word in processed_query for word in ['compare', 'vs', 'versus', 'difference']):
-            processed_query += " comparison differences pros cons advantages disadvantages"
+            processed_query += " , context : comparison differences pros cons advantages disadvantages"
         elif any(word in processed_query for word in ['best', 'recommend', 'should']):
-            processed_query += " recommendation advice tips best practices optimal"
+            processed_query += " , context : recommendation advice tips best practices optimal"
         
-        # 4. Add entities found in the query
-        entities = query_analysis.get('entities', [])
         if entities:
             entity_text = " ".join(entities)
             processed_query += f" {entity_text}"

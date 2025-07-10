@@ -46,5 +46,29 @@
     "source_url": "https://laravel.com/docs/12.x/queues",
     "total_chunks": 706,
     "storage_timestamp": "2025-07-10T18:28:51.200729"
+  },
+  "375c50c9-926d-4b95-96e5-6f5518976002": {
+    "query": "How do Laravel queues work with scheduled tasks?",
+    "source_url": "https://laravel.com/docs/12.x/queues",
+    "total_chunks": 657,
+    "storage_timestamp": "2025-07-10T18:37:34.934341"
+  },
+  "18ffcd01-8be4-4fe5-bc51-78572a9690db": {
+    "query": "How do Laravel queues work with scheduled tasks?",
+    "source_url": "https://laravel.com/docs/12.x/queues",
+    "total_chunks": 835,
+    "storage_timestamp": "2025-07-10T18:50:23.079525"
+  },
+  "f22b7811-7e58-4257-899e-a9fe803ba15a": {
+    "query": "How do Laravel queues work with scheduled tasks?",
+    "source_url": "https://laravel.com/docs/12.x/queues",
+    "total_chunks": 825,
+    "storage_timestamp": "2025-07-10T18:54:24.547064"
+  },
+  "ebba8af4-3250-4af5-8889-c11781bc60c4": {
+    "query": "This is shows that the tailwind css has receives a v4 Which changes a lot of configuration stuff",
+    "source_url": "https://tailwindcss.com/blog/tailwindcss-v4",
+    "total_chunks": 132,
+    "storage_timestamp": "2025-07-10T18:59:21.846731"
   }
 }
