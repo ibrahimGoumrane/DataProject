@@ -115,23 +115,36 @@ class RAGPipeline:
         print(f"🔍 Query complexity: {query_analysis['complexity_score']:.2f}, type: {query_analysis['question_type']}")
         
         # 1.5 Enhance query with preprocessing
-        enhanced_query = self.preprocess_query(query , question_type=query_analysis.get('question_type', 'general') , entities=query_analysis.get('entities', []))
+        enhanced_query = self.preprocess_query(query, question_type=query_analysis.get('question_type', 'general'), entities=query_analysis.get('entities', []))
         print(f"🔄 Enhanced query: '{enhanced_query}'")
         
         # 2. Process the enhanced query
         _, query_embedding = self.data_handler.process_query(enhanced_query)
         
         # 3. Search for relevant content with adaptive k
+        print(f"🔍 Searching for content in session: {session_id if session_id else 'ALL SESSIONS'}")
+        print(f"📊 Total vectors in storage: {self.storage_manager.vector_store.index.ntotal}")
+        
         search_results = self.storage_manager.search_content(
             query_embedding, 
-            k=query_analysis['suggested_k'], 
+            k=max(query_analysis['suggested_k'], 10),  # Ensure we search for at least 10 results
             session_id=session_id
         )
+        
+        print(f"🔍 Found {len(search_results)} search results")
+        
+        # Debug: Show source URLs of found results
+        if search_results:
+            sources = set()
+            for result in search_results:
+                if 'metadata' in result and 'source_url' in result['metadata']:
+                    sources.add(result['metadata']['source_url'])
+            print(f"📚 Sources found: {', '.join(list(sources)[:3])}{'...' if len(sources) > 3 else ''}")
         
         if not search_results:
             return {
                 "query": query,
-                "answer": "I couldn't find relevant information to answer your question.",
+                "answer": "I couldn't find relevant information to answer your question. Please make sure you've processed relevant websites or try rephrasing your question.",
                 "sources": [],
                 "confidence": 0.0,
                 "query_analysis": query_analysis,

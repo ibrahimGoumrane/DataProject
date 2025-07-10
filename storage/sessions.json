@@ -94,5 +94,61 @@
     "source_url": "https://tailwindcss.com/docs/adding-custom-styles",
     "total_chunks": 95,
     "storage_timestamp": "2025-07-10T19:32:30.046595"
+  },
+  "776e5423-09fe-4393-8b23-0c30a7e05982": {
+    "query": "This how u customize Style in tailwind css",
+    "source_url": "https://tailwindcss.com/docs/adding-custom-styles",
+    "total_chunks": 80,
+    "storage_timestamp": "2025-07-10T19:48:45.308749",
+    "websites": [
+      {
+        "source_url": "https://tailwindcss.com/docs/adding-custom-styles",
+        "query": "This how u customize Style in tailwind css",
+        "chunks_added": 80,
+        "added_timestamp": "2025-07-10T19:48:45.308749"
+      },
+      {
+        "source_url": "https://tailwindcss.com/blog/tailwindcss-v4",
+        "query": "This is the new version fo tailwind css ",
+        "chunks_added": 112,
+        "added_timestamp": "2025-07-10T19:50:14.423311"
+      }
+    ],
+    "last_updated": "2025-07-10T19:50:14.423311"
+  },
+  "5217c98c-6865-4af7-a191-089254f54fdf": {
+    "query": "This is the official next js doc page",
+    "source_url": "https://nextjs.org/docs",
+    "total_chunks": 159,
+    "storage_timestamp": "2025-07-10T20:01:45.920745",
+    "websites": [
+      {
+        "source_url": "https://nextjs.org/docs",
+        "query": "This is the official next js doc page",
+        "chunks_added": 159,
+        "added_timestamp": "2025-07-10T20:01:45.920745"
+      },
+      {
+        "source_url": "https://nextjs.org/docs/app/guides/custom-server",
+        "query": "this how you deploy next js in a custom server",
+        "chunks_added": 160,
+        "added_timestamp": "2025-07-10T20:02:23.837181"
+      }
+    ],
+    "last_updated": "2025-07-10T20:02:23.837181"
+  },
+  "e0f72ba6-4582-4335-b2dd-7156238a97f1": {
+    "query": "next js static export",
+    "source_url": "https://nextjs.org/docs/pages/guides/static-exports",
+    "total_chunks": 149,
+    "storage_timestamp": "2025-07-10T20:07:31.895123",
+    "websites": [
+      {
+        "source_url": "https://nextjs.org/docs/pages/guides/static-exports",
+        "query": "next js static export",
+        "chunks_added": 149,
+        "added_timestamp": "2025-07-10T20:07:31.895123"
+      }
+    ]
   }
 }

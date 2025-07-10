@@ -81,6 +81,7 @@ class VectorStore:
             raise ValueError("Invalid scrape result provided")
         
         # Generate a new session_id if not provided
+        is_new_session = session_id is None
         if not session_id:
             session_id = str(uuid.uuid4())
             print(f"💾 Creating new scrape session: {session_id}")
@@ -113,7 +114,7 @@ class VectorStore:
             self.metadata.append(metadata)
         
         # Save session info
-        self._save_session_info(session_id, scrape_result, is_append=bool(session_id))
+        self._save_session_info(session_id, scrape_result, is_append=not is_new_session)
         
         # Persist to disk
         self._save_to_disk()
@@ -146,12 +147,16 @@ class VectorStore:
         # Normalize query embedding
         query_embedding = self._normalize_embeddings(query_embedding.reshape(1, -1))
         
+        # If filtering by session, search more results to account for filtering
+        search_k = k * 3 if session_id else k
+        search_k = min(search_k, self.index.ntotal)
+        
         # Search FAISS index
-        scores, indices = self.index.search(query_embedding.astype('float32'), k)
+        scores, indices = self.index.search(query_embedding.astype('float32'), search_k)
         
         results = []
         for score, idx in zip(scores[0], indices[0]):
-            if idx >= 0:  # Valid index
+            if idx >= 0 and idx < len(self.metadata):  # Valid index
                 result = {
                     'chunk': self.chunks[idx],
                     'metadata': self.metadata[idx],
@@ -162,6 +167,14 @@ class VectorStore:
                 # Filter by session if requested
                 if session_id is None or self.metadata[idx].get('session_id') == session_id:
                     results.append(result)
+                    
+                # Stop if we have enough results
+                if len(results) >= k:
+                    break
+        
+        # Debug logging
+        if session_id:
+            print(f"🔍 Session {session_id}: Found {len(results)} results out of {self.index.ntotal} total vectors")
         
         return results
     
@@ -203,13 +216,37 @@ class VectorStore:
             with open(self.sessions_path, 'r') as f:
                 sessions = json.load(f)
         
-        # Update or add session info
-        sessions[session_id] = {
-            'query': scrape_result['query'],
-            'source_url': scrape_result['source_url'],
-            'total_chunks': scrape_result['total_chunks'],
-            'storage_timestamp': datetime.now().isoformat()
-        }
+        # If appending to existing session, update with new website info
+        if is_append and session_id in sessions:
+            # Keep track of multiple websites in the same session
+            if 'websites' not in sessions[session_id]:
+                sessions[session_id]['websites'] = []
+            
+            # Add new website to the list
+            new_website = {
+                'source_url': scrape_result['source_url'],
+                'query': scrape_result['query'],
+                'chunks_added': scrape_result['total_chunks'],
+                'added_timestamp': datetime.now().isoformat()
+            }
+            sessions[session_id]['websites'].append(new_website)
+            sessions[session_id]['last_updated'] = datetime.now().isoformat()
+        else:
+            # Create new session info
+            sessions[session_id] = {
+                'query': scrape_result['query'],
+                'source_url': scrape_result['source_url'],
+                'total_chunks': scrape_result['total_chunks'],
+                'storage_timestamp': datetime.now().isoformat(),
+                'websites': [
+                    {
+                        'source_url': scrape_result['source_url'],
+                        'query': scrape_result['query'],
+                        'chunks_added': scrape_result['total_chunks'],
+                        'added_timestamp': datetime.now().isoformat()
+                    }
+                ]
+            }
         
         with open(self.sessions_path, 'w') as f:
             json.dump(sessions, f, indent=2)
@@ -309,6 +346,26 @@ class VectorStore:
         print(f"⚠️ Session ID {session_id} not found")
         return False
 
+    def get_session_metadata(self, session_id: str) -> List[Dict]:
+        """
+        Get all metadata entries for a specific session.
+        
+        Args:
+            session_id (str): The session ID to filter by
+            
+        Returns:
+            List[Dict]: All metadata entries for the session
+        """
+        if not session_id:
+            return []
+            
+        session_metadata = []
+        for meta in self.metadata:
+            if meta.get('session_id') == session_id:
+                session_metadata.append(meta)
+                
+        return session_metadata
+    
     def _get_storage_size(self) -> float:
         """Calculate total storage size in MB."""
         total_size = 0

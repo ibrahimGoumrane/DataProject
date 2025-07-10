@@ -30,16 +30,18 @@ def run_interactive_cli(existing_session_id=None):
         session_info = pipeline.storage_manager.vector_store.get_session_info(session_id)
         if session_info:
             print(f"\n📋 RESUMING EXISTING SESSION: {session_id}")
-            source_url = session_info.get('source_url')
-            if source_url and source_url not in websites_processed:
-                websites_processed.append(source_url)
-                print(f"Found website in session: {source_url}")
             
-            # Try to find other websites associated with this session
-            for metadata in pipeline.storage_manager.vector_store.get_session_metadata(session_id):
-                url = metadata.get('source_url')
-                if url and url not in websites_processed:
-                    websites_processed.append(url)
+            # Get websites from session info
+            if 'websites' in session_info:
+                for website_info in session_info['websites']:
+                    url = website_info.get('source_url')
+                    if url and url not in websites_processed:
+                        websites_processed.append(url)
+            else:
+                # Fallback to old format
+                source_url = session_info.get('source_url')
+                if source_url and source_url not in websites_processed:
+                    websites_processed.append(source_url)
             
             print(f"Websites already processed in this session: {len(websites_processed)}")
             for i, website in enumerate(websites_processed, 1):

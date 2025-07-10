@@ -249,7 +249,7 @@ class RAGEnhancer:
             'question_type': self._detect_question_type(query),
             'complexity_score': 0.0,
             'entities': self._extract_simple_entities(query),
-            'suggested_k': 10  # Default number of results
+            'suggested_k': 50  # Increased default number of results
         }
         
         # Calculate complexity score
@@ -261,14 +261,14 @@ class RAGEnhancer:
         
         analysis['complexity_score'] = min(sum(complexity_factors) / len(complexity_factors), 1.0)
         
-        # Adjust suggested k based on complexity
+        # Adjust suggested k based on complexity - much higher values
         if analysis['complexity_score'] > 0.7:
-            analysis['suggested_k'] = 10
+            analysis['suggested_k'] = 100  # Complex queries get more results
         elif analysis['complexity_score'] > 0.4:
-            analysis['suggested_k'] = 7
+            analysis['suggested_k'] = 75  # Medium complexity
         else:
-            analysis['suggested_k'] = 5
-            
+            analysis['suggested_k'] = 50  # Simple queries still get plenty of results
+
         return analysis
     
     def _detect_question_type(self, query: str) -> str:
