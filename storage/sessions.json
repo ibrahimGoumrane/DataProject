@@ -40,5 +40,11 @@
     "source_url": "https://laravel.com/docs/12.x/scheduling",
     "total_chunks": 941,
     "storage_timestamp": "2025-07-10T17:54:05.827414"
+  },
+  "a92ccc18-ee0b-4147-9176-797151172883": {
+    "query": "How do Laravel queues work with scheduled tasks?",
+    "source_url": "https://laravel.com/docs/12.x/queues",
+    "total_chunks": 706,
+    "storage_timestamp": "2025-07-10T18:28:51.200729"
   }
 }

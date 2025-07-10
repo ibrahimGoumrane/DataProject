@@ -66,12 +66,13 @@ class VectorStore:
             print(f"⚠️ Error loading existing data: {e}")
             print("Starting with empty storage")
     
-    def add_scrape_session(self, scrape_result: Dict) -> str:
+    def add_scrape_session(self, scrape_result: Dict, session_id: Optional[str] = None) -> str:
         """
         Add a complete scraping session to the vector store.
         
         Args:
             scrape_result (Dict): Complete result from scraper.scrape()
+            session_id (str, optional): Existing session ID to append to
         
         Returns:
             str: Session ID for tracking
@@ -79,9 +80,13 @@ class VectorStore:
         if not scrape_result or not scrape_result.get('processed_chunks'):
             raise ValueError("Invalid scrape result provided")
         
-        session_id = str(uuid.uuid4())
+        # Generate a new session_id if not provided
+        if not session_id:
+            session_id = str(uuid.uuid4())
+            print(f"💾 Creating new scrape session: {session_id}")
+        else:
+            print(f"💾 Appending to existing session: {session_id}")
         
-        print(f"💾 Storing scrape session: {session_id}")
         print(f"📊 Chunks to store: {len(scrape_result['processed_chunks'])}")
         
         # Normalize embeddings for cosine similarity
@@ -108,7 +113,7 @@ class VectorStore:
             self.metadata.append(metadata)
         
         # Save session info
-        self._save_session_info(session_id, scrape_result)
+        self._save_session_info(session_id, scrape_result, is_append=bool(session_id))
         
         # Persist to disk
         self._save_to_disk()
@@ -191,13 +196,14 @@ class VectorStore:
         
         return "\n\n".join(context_parts)
     
-    def _save_session_info(self, session_id: str, scrape_result: Dict):
+    def _save_session_info(self, session_id: str, scrape_result: Dict, is_append: bool = False):
         """Save session information for tracking."""
         sessions = {}
         if os.path.exists(self.sessions_path):
             with open(self.sessions_path, 'r') as f:
                 sessions = json.load(f)
         
+        # Update or add session info
         sessions[session_id] = {
             'query': scrape_result['query'],
             'source_url': scrape_result['source_url'],
@@ -260,6 +266,49 @@ class VectorStore:
             'total_sessions': len(self.list_sessions())
         }
     
+    def clear_index_store_by_session(self, session_id: str) -> bool:
+        """
+        Clear all data associated with a specific session ID.
+        
+        Args:
+            session_id (str): Session ID to clear
+        
+        Returns:
+            bool: True if cleared successfully, False otherwise
+        """
+        if not os.path.exists(self.sessions_path):
+            print(f"⚠️ No sessions found to clear for ID: {session_id}")
+            return False
+        
+        # Load existing sessions
+        with open(self.sessions_path, 'r') as f:
+            sessions = json.load(f)
+        
+        # Filter out the session to clear
+        if session_id in sessions:
+            del sessions[session_id]
+            with open(self.sessions_path, 'w') as f:
+                json.dump(sessions, f, indent=2)
+            
+            # Remove associated metadata and chunks
+            self.metadata = [m for m in self.metadata if m.get('session_id') != session_id]
+            self.chunks = [c for c in self.chunks if c.get('session_id') != session_id]
+            
+            # Rebuild FAISS index
+            self.index = faiss.IndexFlatIP(self.embedding_dim)
+            embeddings = np.array([m['embedding'] for m in self.metadata], dtype='float32')
+            if len(embeddings) > 0:
+                self.index.add(embeddings)
+            
+            # Save updated data
+            self._save_to_disk()
+            
+            print(f"✅ Cleared session {session_id} and associated data")
+            return True
+        
+        print(f"⚠️ Session ID {session_id} not found")
+        return False
+
     def _get_storage_size(self) -> float:
         """Calculate total storage size in MB."""
         total_size = 0
@@ -267,3 +316,5 @@ class VectorStore:
             if os.path.exists(file_path):
                 total_size += os.path.getsize(file_path)
         return total_size / (1024 * 1024)
+
+

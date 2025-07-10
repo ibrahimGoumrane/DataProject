@@ -1,287 +1,178 @@
-# 🧠 Ask a Website Anything - Live Web Retrieval RAG Chatbot
+# Execution Flow of process_website and answer_question
 
-> A powerful chatbot that allows users to input any website URL, dynamically crawls and extracts content, embeds it into a vector store, and answers natural language queries based on the **live content** of that website using a language model.
+Let me explain the detailed flow of execution when running both the `process_website` and `answer_question` methods in the RAG pipeline, including how data is processed and how the LLM receives its context.
 
-## 🎯 Project Goal
+## 1. process_website Flow
 
-Build an intelligent chatbot system that can:
-
-- Accept any website URL as input
-- Dynamically crawl and extract content (HTML pages, subpages, code blocks)
-- Embed content into a vector store for efficient retrieval
-- Answer natural language queries based on live website content
-- Provide contextual responses with source attribution
-
-## 📐 System Architecture
-
-```plaintext
-[User Input URL] ---> [Web Scraper]
-                          |
-                          v
-                [HTML Cleaner + Chunker]
-                          |
-                          v
-               [Embedder → Vector Store]
-                          |
-                          v
-[User Query] ---> [Retriever + Prompt Builder] ---> [LLM]
-                          |
-                          v
-                   [Final Answer Output]
-```
-
-## 🧱 Project Structure
+The `process_website` method handles fetching, processing, and storing website content:
 
 ```
-ask-website-anything/
+User calls process_website with URL and query
+├── 1. Scraper scrapes the website (using Playwright)
+│   ├── Extracts HTML content
+│   ├── Renders JavaScript if needed
+│   ├── Follows links up to the configured depth
+│   └── Returns raw content
 │
-├── backend/
-│   ├── scraper.py           # Crawl website and extract raw HTML/text
-│   ├── parser.py            # Clean HTML, extract code/text, chunk
-│   ├── embedder.py          # Embed & store chunks in FAISS
-│   ├── retriever.py         # Similarity search on vector store
-│   ├── generator.py         # Build prompt & get LLM response
-│   ├── api.py               # FastAPI app (optional)
+├── 2. DataHandler processes the raw content
+│   ├── Converts HTML to readable text (via HTML2Text)
+│   ├── Performs minimal text cleaning (whitespace normalization)
+│   ├── Chunks the text based on size and sentence boundaries
+│   ├── Filters out empty chunks and exact duplicates
+│   └── Creates embeddings for each chunk
 │
-├── interface/
-│   ├── cli.py               # Terminal interface (MVP)
-│   └── streamlit_app.py     # Streamlit web frontend
+├── 3. StorageManager stores the data
+│   ├── Creates a unique session ID
+│   ├── Normalizes embeddings for cosine similarity
+│   ├── Stores embeddings in FAISS vector index
+│   ├── Stores original chunks and metadata
+│   └── Persists data to disk
 │
-├── data/
-│   └── (Temporary scraped pages and embeddings)
-│
-├── requirements.txt
-└── README.md
+└── 4. Returns session info to the user
+    ├── Session ID for future reference
+    ├── Number of chunks stored
+    └── Sample of immediate relevant context
 ```
 
-## 📆 Development Phases
+## 2. answer_question Flow
 
-### ✅ Phase 1: Basic Functionality (MVP)
+The `answer_question` method retrieves relevant content and generates an answer:
 
-**Goal:** Build a CLI chatbot that takes a URL and answers based on that site.
+```
+User calls answer_question with query and session ID
+├── 1. RAGEnhancer analyzes query complexity
+│   ├── Calculates complexity score based on length, entities, etc.
+│   ├── Determines question type (procedural, definition, etc.)
+│   └── Suggests optimal number of results to retrieve (k)
+│
+├── 2. DataHandler processes the query
+│   ├── Performs minimal normalization (just whitespace)
+│   └── Creates an embedding for the query
+│
+├── 3. StorageManager searches for relevant content
+│   ├── Uses FAISS to find vectors similar to query embedding
+│   ├── Retrieves k chunks with highest similarity
+│   ├── Includes original text and metadata for each chunk
+│   └── Filters by session ID if specified
+│
+├── 4. RAGEnhancer re-ranks search results
+│   ├── Performs hybrid re-ranking:
+│   │   ├── Semantic similarity (50%)
+│   │   ├── TF-IDF matching (30%)
+│   │   └── Keyword overlap (20%)
+│   └── Returns results in new ranked order
+│
+├── 5. RAGEnhancer selects context
+│   ├── Takes re-ranked results
+│   ├── Combines chunks up to max_context_length (10,000 chars)
+│   ├── Adds relevance scores to each chunk
+│   └── Creates a single context string
+│
+├── 6. LLM generates answer with context
+│   ├── Creates enhanced prompt with:
+│   │   ├── Original query
+│   │   ├── Selected context (up to 10,000 chars)
+│   │   ├── Source information
+│   │   └── Type-specific instructions
+│   ├── Sends prompt to OpenAI with system instructions
+│   └── Retrieves and processes response
+│
+└── 7. Returns comprehensive answer to user
+    ├── LLM-generated answer
+    ├── Original and re-ranked search results
+    ├── Query analysis information
+    ├── Source metadata
+    └── Answer quality metrics
+```
 
-1. **🌐 Website Scraper**
+## How the LLM Gets Fed Data
 
-   - Use `requests`, `BeautifulSoup`, and `urljoin` to crawl the base page and linked subpages
-   - Respect same domain / depth limits
+The key part of this process is how the LLM receives the context data:
 
-2. **🧹 HTML Cleaner + Chunker**
+1. **Context Selection**: The RAG enhancer takes the re-ranked search results and combines them into a single context string up to the maximum context length (10,000 characters), preserving as much of the original content as possible.
 
-   - Clean HTML: strip navbars, footers, scripts
-   - Extract content blocks (headers, code blocks, lists)
-   - Chunk into 300–500 token segments
+2. **Prompt Construction**: The LLM module creates an enhanced prompt with the following structure:
 
-3. **🔐 Embedding + Storage**
+   ```
+   QUESTION: {user_query}
 
-   - Use `sentence-transformers` (e.g., `"all-MiniLM-L6-v2"`) or OpenAI embeddings
-   - Store vectors in FAISS or ChromaDB
+   RELEVANT CONTEXT:
+   [Relevance: 0.923] {first_chunk_content}
 
-4. **🔍 Query + Retrieval**
+   [Relevance: 0.887] {second_chunk_content}
 
-   - Convert user question into embedding
-   - Retrieve top K chunks using cosine similarity
+   ...more context chunks...
 
-5. **🧠 Prompt & LLM Answer**
+   SOURCES:
+   - {source_url_1}
+   - {source_url_2}
+   - etc.
 
-   - Construct prompt: `Context:\n... + Question: ...`
-   - Call OpenAI (or local model like Mistral) to get an answer
+   Please provide a comprehensive and accurate answer to the question based on the context provided.
 
-6. **🖥️ CLI Interface**
-   - Build a simple command-line interface:
-   ```bash
-   python cli.py
-   > Enter URL: https://tailwindcss.com/docs
-   > Enter question: How do I add custom colors?
-   > Answer: ...
+   Instructions:
+   1. Format your response in clean Markdown...
+   2. Answer directly and concisely...
+   ...more instructions...
    ```
 
-### ✅ Phase 2: Advanced UX + Caching
+3. **System Prompt**: A system prompt is also provided to the LLM to set its behavior:
 
-1. **📁 In-memory or local cache**
+   ```
+   You are a helpful AI assistant that answers questions based on provided context from web content.
 
-   - Avoid re-scraping same URL by saving index in `data/`
+   Your role:
+   - Answer questions accurately using only the provided context
+   - Be concise but comprehensive
+   ...more role description...
+   ```
 
-2. **📊 Streamlit UI**
+4. **API Call**: The complete prompt (system prompt + enhanced prompt with context) is sent to the OpenAI API with the configured parameters (temperature, max tokens, etc.).
 
-   - Build interactive web interface with:
-     - URL input field
-     - Question input box
-     - Real-time answer display
-     - Context chunks + source URL visualization
+5. **Response Handling**: The LLM's response is processed, quality metrics are calculated, and the full result is returned to the user.
 
-3. **🧪 Test Cases**
-   - Run on Tailwind docs, React docs, Django docs, etc.
+This approach ensures that the LLM has access to the most relevant content from the website while staying within token limits, and that the answer is based specifically on the retrieved content rather than the model's general knowledge.
 
-### ✅ Phase 3: Live Enhancements
+# Multi-Website Context Support
 
-1. **🔄 Recursive Smart Crawler**
+The RAG pipeline now supports combining content from multiple websites under a single session ID. This feature allows for broader context when answering questions that span multiple sources.
 
-   - Use `requests-html` or `Playwright` for JS-heavy sites
-   - Filter for documentation-like paths
+## How It Works
 
-2. **🌐 Link Indexing with Metadata**
+1. **Process First Website**: Process a website normally to get a session ID
+2. **Process Additional Websites**: Use the same session ID when processing additional websites
+3. **Ask Questions**: When asking questions, use the shared session ID to get context from all processed websites
 
-   - Track content source (URL, title, section header)
-
-3. **📎 Answer with Source Links**
-
-   - Add source URLs to each answer chunk
-
-4. **🧠 Use Local LLM (Optional)**
-   - Use `Mistral`, `TinyLLaMA`, or `OpenHermes` via `llama-cpp-python` or `ollama`
-
-### ✅ Phase 4: Deployment (Optional)
-
-1. **🔌 API Backend**
-
-   - Use FastAPI to expose endpoints:
-     - `/scrape`
-     - `/query`
-     - `/answer`
-
-2. **🌍 Deploy**
-   - **Backend**: Render, Railway, or Hugging Face Spaces
-   - **Frontend**: Vercel (if using Next.js)
-
-## 🧰 Tech Stack & Libraries (Optimized Choices)
-
-| Purpose        | Selected Tool                 | Why This Choice                                    |
-| -------------- | ----------------------------- | -------------------------------------------------- |
-| Web Scraping   | `requests` + `BeautifulSoup`  | Lightweight, reliable, handles 90% of sites        |
-| JS-Heavy Sites | `requests-html` (when needed) | Python-native, simpler than Playwright             |
-| HTML Cleaning  | `html2text`                   | Fast, minimal dependencies                         |
-| Embeddings     | `sentence-transformers`       | Free, runs locally, good performance               |
-| Vector Store   | `FAISS`                       | Facebook's library, fast, no API costs             |
-| LLM Generator  | `OpenAI GPT-3.5-turbo`        | Best cost/performance ratio                        |
-| Frontend       | `Streamlit`                   | **Your choice** - Easy to learn, rapid prototyping |
-| Backend        | `FastAPI` (optional)          | Modern, fast, great for APIs if needed             |
-
-## 🏁 Milestone Timeline
-
-| Week | Milestone                                     |
-| ---- | --------------------------------------------- |
-| 1    | Basic scraper + cleaner + CLI prototype       |
-| 2    | Embedding + RAG integration + working answers |
-| 3    | Streamlit UI or FastAPI API                   |
-| 4    | Caching, metadata, better UX, testing         |
-| 5    | Optional: Local LLM support                   |
-| 6    | Optional: Deploy backend + frontend           |
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Python 3.8+
-- pip package manager
-
-### Installation
-
-```bash
-# Clone the repository
-git clone <repository-url>
-cd ask-website-anything
-
-# Create virtual environment
-python -m venv venv
-venv\Scripts\activate  # On Windows
-
-# Install core dependencies
-pip install streamlit requests beautifulsoup4 sentence-transformers faiss-cpu openai html2text requests-html
-```
-
-### Quick Start
-
-```bash
-# Run the CLI interface
-python interface/cli.py
-
-# Or run the Streamlit web app (Phase 2+)
-streamlit run interface/streamlit_app.py
-```
-
-## 🔥 Advanced RAG Enhancements
-
-### RAGEnhancer Module
-
-The project now includes a powerful `RAGEnhancer` module that improves RAG accuracy and performance:
-
-- **Hybrid Reranking**: Combines semantic, TF-IDF, and keyword-based ranking methods
-- **Context Selection**: Intelligently selects diverse and relevant context chunks
-- **Query Analysis**: Analyzes query complexity to adjust search strategy
-- **Context Quality Suggestions**: Identifies potential improvements to retrieved context
-
-### Enhanced Prompt Engineering
-
-- **Dynamic Prompting**: Adjusts prompts based on query type and complexity
-- **Structured Markdown Responses**: Formats answers with proper markdown structure
-- **Source Attribution**: Properly cites sources in generated answers
-- **Context-Aware Instructions**: Modifies instructions based on detected question type
-
-### Advanced Output Formatting
-
-- **Multiple Format Support**: Save results in both Markdown and HTML formats
-- **Detailed Metadata**: Includes query analysis, context quality, and answer quality metrics
-- **Professional Styling**: HTML output with responsive design and proper styling
-- **Quality Assessment**: Evaluates answer quality with specific improvement suggestions
-
-### Usage Example
+## Example Usage
 
 ```python
-from api.rag_pipeline import RAGPipeline
-from api.result_formatter import ResultFormatter
+# Process first website
+result1 = pipeline.process_website(
+    url="https://example.com/page1",
+    query="What is X?"
+)
+session_id = result1['session_id']
 
-# Initialize pipeline and formatter
-rag_pipeline = RAGPipeline()
-formatter = ResultFormatter()
+# Process second website using the same session ID
+result2 = pipeline.process_website(
+    url="https://example.com/page2",
+    query="How does X relate to Y?",
+    session_id=session_id  # Reuse the session ID
+)
 
-# Process a website
-url = "https://tailwindcss.com/docs/adding-custom-styles"
-query = "How do I create custom utility classes in Tailwind CSS?"
-process_result = rag_pipeline.process_website(url=url, query=query)
-
-# Get the enhanced answer
-answer = rag_pipeline.answer_question(query=query, session_id=process_result['session_id'])
-
-# Save the result in multiple formats
-saved_files = formatter.save_both_formats(answer, "tailwind_custom_utilities")
+# Ask a question that requires context from both websites
+answer = pipeline.answer_question(
+    "How does X work with Y?",
+    session_id=session_id
+)
 ```
 
-Run the enhanced RAG pipeline test:
+## Benefits
 
-```bash
-python test_enhanced_rag.py
-```
+- **Broader Context**: Get answers that incorporate information from multiple related sources
+- **Cross-Reference Information**: Answer questions that require comparing or combining information
+- **Topic Exploration**: Build a comprehensive knowledge base on a specific topic across multiple pages
 
-## 🔥 Bonus Features (Future Ideas)
+## Testing
 
-- **Chat History**: Maintain conversation history per website
-- **Multi-site Comparison**: Compare information across multiple sites
-- **Hybrid Support**: Upload files + URL combination
-- **Browser Plugin**: RAG assistant extension for any webpage
-- **GitHub Integration**: Analyze repositories (README + docs + code)
-- **Real-time Updates**: Monitor website changes and update embeddings
-- **Advanced Filtering**: Content type filtering (docs, blogs, code, etc.)
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Built with modern RAG (Retrieval-Augmented Generation) techniques
-- Inspired by the need for dynamic, context-aware web content analysis
-- Thanks to the open-source community for the amazing tools and libraries
-
----
-
-**Created on:** July 10, 2025  
-**Status:** In Development  
-**Version:** 1.0.0-alpha
+Use the test script `test_multi_website_context.py` to see this feature in action, or run `main.py` and select option 2 to test multi-website context processing.

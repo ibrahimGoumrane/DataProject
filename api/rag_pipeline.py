@@ -47,13 +47,14 @@ class RAGPipeline:
         print(f"🔑 OpenAI: {'✅ Available' if self.llm.is_available() else '❌ Not configured'}")
         print("🚀 Enhanced RAG features enabled")
     
-    def process_website(self, url: str, query: str) -> Dict:
+    def process_website(self, url: str, query: str, session_id: Optional[str] = None) -> Dict:
         """
         Complete pipeline: scrape website and store in vector database.
         
         Args:
             url (str): Website URL to scrape
             query (str): User query for context
+            session_id (str, optional): Existing session ID to append to for combining multiple websites
         
         Returns:
             Dict: Processing result with session info
@@ -69,7 +70,14 @@ class RAGPipeline:
         
         # 2. Store in vector database
         try:
-            session_id = self.storage_manager.store_scrape_result(scrape_result)
+            # Use existing session ID if provided (for multi-website context)
+            if session_id:
+                print(f"📌 Appending to existing session: {session_id}")
+                
+            session_id = self.storage_manager.store_scrape_result(
+                scrape_result,
+                session_id=session_id
+            )
             
             # 3. Get immediate relevant context
             relevant_context = self.storage_manager.get_context_for_query(
@@ -233,7 +241,7 @@ class RAGPipeline:
         Args:
             query (str): User question
             url (str, optional): Website URL to process (if not already processed)
-            session_id (str, optional): Existing session ID to use
+            session_id (str, optional): Existing session ID to use or append to
         
         Returns:
             Dict: Complete answer with sources and metadata
@@ -243,7 +251,7 @@ class RAGPipeline:
         # If URL provided, process it first
         if url:
             print(f"🌐 Processing website: {url}")
-            process_result = self.process_website(url, query)
+            process_result = self.process_website(url, query, session_id)
             if not process_result.get('success'):
                 return {
                     "error": "Failed to process website",

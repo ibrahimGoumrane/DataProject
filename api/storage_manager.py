@@ -22,12 +22,13 @@ class StorageManager:
         # Cache for frequently accessed data
         self._query_cache = {}
         
-    def store_scrape_result(self, scrape_result: Dict) -> str:
+    def store_scrape_result(self, scrape_result: Dict, session_id: Optional[str] = None) -> str:
         """
         Store a complete scraping result.
         
         Args:
             scrape_result (Dict): Result from scraper.scrape()
+            session_id (str, optional): Existing session ID to append to
         
         Returns:
             str: Session ID
@@ -35,7 +36,7 @@ class StorageManager:
         if not self._validate_scrape_result(scrape_result):
             raise ValueError("Invalid scrape result format")
         
-        return self.vector_store.add_scrape_session(scrape_result)
+        return self.vector_store.add_scrape_session(scrape_result, session_id)
     
     def search_content(self, query_embedding: np.ndarray, k: int = 5, 
                       session_id: Optional[str] = None) -> List[Dict]:
