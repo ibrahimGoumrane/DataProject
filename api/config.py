@@ -22,21 +22,21 @@ class RAGConfig:
         self.OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
         
         # RAG Pipeline Settings
-        self.MAX_CONTEXT_LENGTH = self._get_int('RAG_MAX_CONTEXT_LENGTH', 2000)
-        self.MAX_TOKENS = self._get_int('RAG_MAX_TOKENS', 1000)
+        self.MAX_CONTEXT_LENGTH = self._get_int('RAG_MAX_CONTEXT_LENGTH', 10000)
+        self.MAX_TOKENS = self._get_int('RAG_MAX_TOKENS', 10000)
         self.TEMPERATURE = self._get_float('RAG_TEMPERATURE', 0.7)
         self.MODEL_NAME = os.getenv('RAG_MODEL_NAME', 'gpt-4.1-nano')
-        self.TOP_K_RESULTS = self._get_int('RAG_TOP_K_RESULTS', 5)
+        self.TOP_K_RESULTS = self._get_int('RAG_TOP_K_RESULTS', 10)
         
         # Data Processing Settings
-        self.CHUNK_SIZE = self._get_int('DATA_CHUNK_SIZE', 500)
-        self.CHUNK_OVERLAP = self._get_int('DATA_CHUNK_OVERLAP', 50)
-        self.DATA_MAX_CONTEXT_LENGTH = self._get_int('DATA_MAX_CONTEXT_LENGTH', 2000)
+        self.CHUNK_SIZE = self._get_int('DATA_CHUNK_SIZE', 1000)
+        self.CHUNK_OVERLAP = self._get_int('DATA_CHUNK_OVERLAP', 100)
+        self.DATA_MAX_CONTEXT_LENGTH = self._get_int('DATA_MAX_CONTEXT_LENGTH', 10000)
         
         # Scraper Settings
-        self.SCRAPER_TIMEOUT = self._get_int('SCRAPER_TIMEOUT', 30)
-        self.SCRAPER_MAX_DEPTH = self._get_int('SCRAPER_MAX_DEPTH', 3)
-        self.SCRAPER_MAX_ANCHOR_LINKS = self._get_int('SCRAPER_MAX_ANCHOR_LINKS', 5)
+        self.SCRAPER_TIMEOUT = self._get_int('SCRAPER_TIMEOUT', 60)
+        self.SCRAPER_MAX_DEPTH = self._get_int('SCRAPER_MAX_DEPTH', 4)
+        self.SCRAPER_MAX_ANCHOR_LINKS = self._get_int('SCRAPER_MAX_ANCHOR_LINKS', 10)
         self.SCRAPER_SPARSE_CONTENT_THRESHOLD = self._get_int('SCRAPER_SPARSE_CONTENT_THRESHOLD', 750)
         self.SCRAPER_MEAN_SIMILARITY_THRESHOLD = self._get_float('SCRAPER_MEAN_SIMILARITY_THRESHOLD', 0.3)
         # Storage Settings

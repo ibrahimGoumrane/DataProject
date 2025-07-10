@@ -161,7 +161,7 @@ class VectorStore:
         return results
     
     def get_relevant_context(self, query_embedding: np.ndarray, 
-                           max_context_length: int = 2000) -> str:
+                           max_context_length: int = 10000) -> str:
         """
         Get relevant context for RAG generation.
         

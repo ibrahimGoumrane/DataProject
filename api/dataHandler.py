@@ -9,7 +9,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from html2text import HTML2Text
 import numpy as np
 from config import get_config
-
+from typing import List, Tuple
 class DataHandler:
     PATH="data"
     def __init__(self):
@@ -44,6 +44,7 @@ class DataHandler:
     def clean_html_text(self, html_content):
         """
         Clean HTML content and convert to readable text.
+        Minimally processes text to preserve original content meaning.
         """
         if isinstance(html_content, bytes):
             html_content = html_content.decode('utf-8', errors='ignore')
@@ -51,18 +52,8 @@ class DataHandler:
         # Convert HTML to markdown/text
         text = self.html2text.handle(html_content)
         
-        # Remove extra whitespace and normalize
+        # Basic normalization - just normalize whitespace
         text = re.sub(r'\s+', ' ', text).strip()
-        
-        # Remove URLs
-        text = re.sub(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', '', text)
-        
-        # Remove email addresses
-        text = re.sub(r'\S+@\S+', '', text)
-        
-        # Remove excessive punctuation
-        text = re.sub(r'[.]{3,}', '...', text)
-        text = re.sub(r'[-]{3,}', '---', text)
         
         return text.strip()
 
@@ -101,90 +92,63 @@ class DataHandler:
 
     def filter_content_quality(self, text_chunks):
         """
-        Filter out low-quality chunks (too short, repetitive, etc.)
+        Minimal content filtering to preserve original meaning.
+        Only filters out completely empty chunks and exact duplicates.
         """
         filtered_chunks = []
         seen_chunks = set()
         
         for chunk in text_chunks:
-            # Skip very short chunks
-            if len(chunk.strip()) < 50:
+            # Skip empty chunks
+            if not chunk.strip():
                 continue
                 
-            # Skip chunks that are mostly numbers or special characters
-            alpha_ratio = sum(c.isalpha() for c in chunk) / len(chunk)
-            if alpha_ratio < 0.6:
+            # Skip exact duplicate chunks (keep casing and whitespace)
+            if chunk in seen_chunks:
                 continue
                 
-            # Skip duplicate chunks
-            chunk_normalized = re.sub(r'\s+', ' ', chunk.lower().strip())
-            if chunk_normalized in seen_chunks:
-                continue
-                
-            seen_chunks.add(chunk_normalized)
+            seen_chunks.add(chunk)
             filtered_chunks.append(chunk)
         
         return filtered_chunks
     def process_query(self, query):
         """
-        Process the query to extract relevant information.
-        Enhanced with better preprocessing.
+        Simplified query processing that preserves original query meaning.
+        Only performs basic normalization.
         """
-        # Clean the query
-        query = re.sub(r'[^\w\s]', ' ', query)  # Remove special characters
-        query = re.sub(r'\s+', ' ', query).strip()  # Normalize whitespace
+        # Basic normalization - just normalize whitespace
+        normalized_query = re.sub(r'\s+', ' ', query).strip()
         
-        tokens = word_tokenize(query)
-        tokens = [self.lemmatizer.lemmatize(token.lower()) for token in tokens if token.lower() not in self.stop_words]
-        # Also remove punctuation or special characters
-        tokens = [token for token in tokens if token.isalpha() and len(token) > 2]  # Remove very short tokens
+        # Get embedding for the original query
+        _, query_embedding = self.get_embeddings(normalized_query)
         
-        # Create both processed and original query embeddings
-        processed_query = ' '.join(tokens)
-        query , query_embedding = self.get_embeddings(processed_query if processed_query else query)
-
+        # Return original tokens (split by whitespace) and embedding
+        tokens = normalized_query.split()
+        
         return tokens, query_embedding
 
-    def process_html(self, html_text_content , no_html_cleaning=False):
+    def process_html(self, html_text_content, no_html_cleaning=False):
         """
-        Enhanced HTML processing with chunking and quality filtering.
+        Simplified HTML processing that preserves original content meaning.
+        Minimal preprocessing to maintain content integrity.
         """
         # Clean HTML content first
-        if  not no_html_cleaning:
+        if not no_html_cleaning:
             clean_text = self.clean_html_text(html_text_content)
         else:
             clean_text = html_text_content
+            
         # Chunk the text
         text_chunks = self.chunk_text(clean_text)
         
-        # Filter quality
+        # Minimal filtering - just remove empty chunks and exact duplicates
         filtered_chunks = self.filter_content_quality(text_chunks)
         
         if not filtered_chunks:
             return [], np.array([])
-        
-        # Process each chunk
-        processed_chunks = []
-        for chunk in filtered_chunks:
-            sentences = sent_tokenize(chunk)
-            processed_sentences = []
             
-            for sentence in sentences:
-                tokens = word_tokenize(sentence)
-                tokens = [self.lemmatizer.lemmatize(token.lower()) for token in tokens if token.lower() not in self.stop_words]
-                tokens = [token for token in tokens if token.isalpha() and len(token) > 2]
-                
-                if tokens:  # Only add if we have meaningful tokens
-                    processed_sentences.append(' '.join(tokens))
-            
-            if processed_sentences:
-                processed_chunks.append(' '.join(processed_sentences))
-        
-        if not processed_chunks:
-            return [], np.array([])
-            
-        # Embed the processed chunks
-        return self.get_embeddings(processed_chunks)
+        # Embed the original chunks without excessive processing
+        return self.get_embeddings(filtered_chunks)
     
     def get_embeddings(self, chunks):
         """
@@ -200,7 +164,7 @@ class DataHandler:
         data_embeddings = self.model.encode(chunks)
         return chunks, data_embeddings
     
-    def compute_similarity(self, text_content, query, top_k=5):
+    def compute_similarity(self, text_content, query, top_k=10):
         """
         Enhanced similarity computation with ranking and filtering.
         
@@ -251,7 +215,7 @@ class DataHandler:
         if max_context_length is None:
             max_context_length = self.max_context_length
             
-        similar_chunks = self.compute_similarity(text_content, query, top_k=10)
+        similar_chunks = self.compute_similarity(text_content, query, top_k=20)
         
         if not similar_chunks:
             return ""
@@ -267,7 +231,7 @@ class DataHandler:
             else:
                 # Add partial chunk if it fits
                 remaining_length = max_context_length - total_length
-                if remaining_length > 100:  # Only if meaningful amount remains
+                if remaining_length > 200:  # Only if meaningful amount remains
                     context_parts.append(f"[Score: {score:.3f}] {chunk[:remaining_length]}...")
                 break
         
@@ -310,4 +274,113 @@ class DataHandler:
         """
         # Placeholder for nearest neighbor logic
         return f"Retrieved {k} nearest neighbors for query: {query}"
+    
+    def enhance_query_preprocessing(self, query: str) -> str:
+        """
+        Enhanced query preprocessing for better matching.
+        
+        Args:
+            query (str): Original query
+            
+        Returns:
+            str: Enhanced query
+        """
+        # Expand contractions
+        contractions = {
+            "can't": "cannot",
+            "won't": "will not",
+            "don't": "do not",
+            "doesn't": "does not",
+            "isn't": "is not",
+            "aren't": "are not",
+            "wasn't": "was not",
+            "weren't": "were not",
+            "haven't": "have not",
+            "hasn't": "has not",
+            "hadn't": "had not",
+            "wouldn't": "would not",
+            "shouldn't": "should not",
+            "couldn't": "could not"
+        }
+        
+        enhanced_query = query.lower()
+        for contraction, expansion in contractions.items():
+            enhanced_query = enhanced_query.replace(contraction, expansion)
+        
+        # Add synonyms for common terms
+        synonyms = {
+            "how to": "how do I",
+            "what is": "what are",
+            "tell me": "explain",
+            "show me": "demonstrate"
+        }
+        
+        for original, synonym in synonyms.items():
+            if original in enhanced_query:
+                enhanced_query += f" {synonym}"
+        
+        return enhanced_query
+
+    def improve_chunk_quality(self, chunks: List[str]) -> List[str]:
+        """
+        Improve chunk quality by filtering and enhancing.
+        
+        Args:
+            chunks (List[str]): Original chunks
+            
+        Returns:
+            List[str]: Enhanced chunks
+        """
+        improved_chunks = []
+        
+        for chunk in chunks:
+            # Skip very short or very long chunks
+            if len(chunk.strip()) < 30 or len(chunk) > 10000:
+                continue
+            
+            # Clean up chunk
+            clean_chunk = self._clean_chunk(chunk)
+            
+            # Check if chunk has meaningful content
+            if self._has_meaningful_content(clean_chunk):
+                improved_chunks.append(clean_chunk)
+        
+        return improved_chunks
+    
+    def _clean_chunk(self, chunk: str) -> str:
+        """Clean and normalize a text chunk."""
+        # Remove excessive whitespace
+        chunk = re.sub(r'\s+', ' ', chunk)
+        
+        # Remove repeated punctuation
+        chunk = re.sub(r'[.]{3,}', '...', chunk)
+        chunk = re.sub(r'[-]{3,}', '---', chunk)
+        
+        # Fix common encoding issues
+        chunk = chunk.replace('â€™', "'").replace('â€œ', '"').replace('â€', '"')
+        
+        # Ensure proper sentence endings
+        chunk = chunk.strip()
+        if chunk and not chunk.endswith(('.', '!', '?', ':')):
+            chunk += '.'
+        
+        return chunk
+    
+    def _has_meaningful_content(self, chunk: str) -> bool:
+        """Check if chunk contains meaningful content."""
+        # Check word count
+        words = chunk.split()
+        if len(words) < 5:
+            return False
+        
+        # Check for meaningful words (not just numbers and symbols)
+        alpha_words = [word for word in words if word.isalpha()]
+        if len(alpha_words) < 3:
+            return False
+        
+        # Check for repeated patterns
+        if len(set(words)) / len(words) < 0.3:  # Too much repetition
+            return False
+        
+        return True
 

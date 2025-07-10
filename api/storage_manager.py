@@ -53,7 +53,7 @@ class StorageManager:
         return self.vector_store.similarity_search(query_embedding, k, session_id)
     
     def get_context_for_query(self, query_embedding: np.ndarray, 
-                            max_length: int = 2000) -> str:
+                            max_length: int = 10000) -> str:
         """
         Get relevant context for LLM generation.
         

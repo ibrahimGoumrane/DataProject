@@ -151,11 +151,33 @@ class LLM:
         
         # Extract source URLs for citations
         sources = []
-        for result in search_results[:3]:  # Top 3 sources
-            if 'source_url' in result['metadata']:
-                sources.append(result['metadata']['source_url'])
+        metadata_list = []
+        for result in search_results[:5]:  # Top 5 sources
+            if 'metadata' in result:
+                if 'source_url' in result['metadata']:
+                    sources.append(result['metadata']['source_url'])
+                metadata_list.append(result['metadata'])
         
-        sources_text = "\n".join([f"- {url}" for url in set(sources)]) if sources else "- No specific sources available"
+        # Create a formatted sources section
+        sources_text = ""
+        if sources:
+            sources_text = "SOURCES:\n" + "\n".join([f"- {url}" for url in set(sources)])
+        else:
+            sources_text = "SOURCES:\n- No specific sources available"
+            
+        # Get question type hints
+        question_type = ""
+        if search_results and 'query_analysis' in search_results[0]:
+            question_type = search_results[0]['query_analysis'].get('question_type', '')
+            
+        # Add specific instructions based on question type
+        type_specific_instructions = ""
+        if question_type == 'procedural':
+            type_specific_instructions = "Since this is a procedural question, organize your answer as a step-by-step guide with clear instructions."
+        elif question_type == 'definition':
+            type_specific_instructions = "Since this is a definition question, start with a clear, concise definition before providing more details."
+        elif question_type == 'comparative':
+            type_specific_instructions = "Since this is a comparative question, organize your answer to clearly contrast the items being compared."
         
         prompt = f"""
 QUESTION: {query}
@@ -163,7 +185,6 @@ QUESTION: {query}
 RELEVANT CONTEXT:
 {context}
 
-SOURCES:
 {sources_text}
 
 Please provide a comprehensive and accurate answer to the question based on the context provided. 
@@ -182,8 +203,10 @@ Instructions:
    - Use > for important quotes or notes
 6. Don't make up information that's not in the context
 7. Structure your response with clear sections if the topic is complex
-8. Always give more priority to the provided context over general knowledge.
-9. Always choose the most relevant and recent information from the context.
+8. Always give more priority to the provided context over general knowledge
+9. Always choose the most relevant and recent information from the context
+{type_specific_instructions}
+
 Answer in Markdown format:"""
         
         return prompt

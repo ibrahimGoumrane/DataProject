@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Pipeline Result</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            border-bottom: 3px solid #007acc;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #007acc;
+            margin: 0;
+        }
+        .timestamp {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #333;
+            border-left: 4px solid #007acc;
+            padding-left: 15px;
+            margin-bottom: 15px;
+        }
+        .query-box {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            font-style: italic;
+        }
+        .answer-box {
+            background: #fff;
+            border: 1px solid #007acc;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        .metadata {
+            background: #f8f9fa;
+            border-radius: 5px;
+            padding: 15px;
+        }
+        .metadata-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        .metadata-item {
+            padding: 8px;
+            background: white;
+            border-radius: 3px;
+            border-left: 3px solid #28a745;
+        }
+        .search-result {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            background: #fafafa;
+        }
+        .score {
+            color: #007acc;
+            font-weight: bold;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+        }
+        code {
+            background: #f1f1f1;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        pre {
+            background: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 RAG Pipeline Result</h1>
+            <p class="timestamp">Generated: 2025-07-10 17:54:12</p>
+        </div>
+
+        <div class="section">
+            <h2>❓ Query</h2>
+            <div class="query-box">
+                How do i create a scheduled task in Laravel, and what are the key features of its task scheduling system?
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>💡 Answer</h2>
+            <div class="answer-box">
+                <h2>Creating a Scheduled Task in Laravel</h2>
+<p>To create a scheduled task in Laravel, you typically define your scheduled commands or closures within the <code>routes/console.php</code> file. Here's how you can do it:</p>
+<ul>
+<li><strong>Define Tasks in <code>routes/console.php</code>:</strong></li>
+<li>You can schedule closures or commands in this file.</li>
+<li>Example of scheduling a closure to run daily at midnight:
+    <code>php
+    Schedule::call(function () {
+        // Your task logic here
+    })-&gt;daily();</code></li>
+<li>
+<p>You can also schedule Artisan commands:
+    <code>php
+    Schedule::command('emails:send')-&gt;daily();</code></p>
+</li>
+<li>
+<p><strong>Using the <code>withSchedule</code> Method:</strong></p>
+</li>
+<li>
+<p>Alternatively, you can define scheduled tasks in your application's <code>bootstrap/app.php</code> using the <code>withSchedule</code> method:
+    ```php
+    use Illuminate\Console\Scheduling\Schedule;</p>
+<p>-&gt;withSchedule(function (Schedule $schedule) {
+    $schedule-&gt;call(new DeleteRecentUsers)-&gt;daily();
+});
+```</p>
+</li>
+<li>
+<p><strong>Running the Scheduler:</strong></p>
+</li>
+<li>Only a single cron entry is needed on your server to run all scheduled tasks.</li>
+<li>You execute the Laravel scheduler with:
+    <code>bash
+    php artisan schedule:run</code></li>
+<li>
+<p>For automation, this command is typically added to your server's crontab.</p>
+</li>
+<li>
+<p><strong>Viewing Scheduled Tasks:</strong></p>
+</li>
+<li>To see an overview and next run times, use:
+    <code>bash
+    php artisan schedule:list</code></li>
+</ul>
+<h2>Key Features of Laravel's Task Scheduling System</h2>
+<ul>
+<li><strong>Fluent and Expressive API:</strong></li>
+<li>Schedule tasks with methods like <code>daily()</code>, <code>weekly()</code>, <code>monthly()</code>, etc.</li>
+<li>
+<p>Schedule closures, Artisan commands, or system commands.</p>
+</li>
+<li>
+<p><strong>Event Hooks:</strong></p>
+</li>
+<li>
+<p>Laravel dispatches events during scheduling (<code>Starting</code>, <code>Finished</code>, <code>Failed</code>, etc.) allowing for custom listeners.</p>
+</li>
+<li>
+<p><strong>Task Output and Hooks:</strong></p>
+</li>
+<li>
+<p>Manage task output and define hooks for various execution points.</p>
+</li>
+<li>
+<p><strong>Task Management:</strong></p>
+</li>
+<li>Prevent overlapping tasks.</li>
+<li>Schedule tasks on a specific server.</li>
+<li>
+<p>Run background tasks and manage maintenance mode.</p>
+</li>
+<li>
+<p><strong>Schedule Groups and Sub-Minute Tasks:</strong></p>
+</li>
+<li>Organize tasks into groups and define sub-minute frequencies if needed.</li>
+</ul>
+<p>This system simplifies task scheduling by centralizing configuration within your Laravel application, reducing reliance on multiple cron entries and enhancing manageability.</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📊 Metadata</h2>
+            <div class="metadata">
+                <div class="metadata-grid">
+                    <div class="metadata-item">
+                        <strong>Confidence:</strong> 0.74
+                    </div>
+                    <div class="metadata-item">
+                        <strong>LLM Model:</strong> gpt-4.1-nano
+                    </div>
+                    <div class="metadata-item">
+                        <strong>LLM Available:</strong> Yes
+                    </div>
+                    <div class="metadata-item">
+                        <strong>Tokens Used:</strong> 1511
+                    </div>
+                    <div class="metadata-item">
+                        <strong>Session ID:</strong> N/A...
+                    </div>
+                    <div class="metadata-item">
+                        <strong>Context Used:</strong> 3106 chars
+                    </div>
+                    <div class="metadata-item">
+                        <strong>Enhancement:</strong> ✅ Applied
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🔍 Query Analysis</h2>
+            <div class="metadata">
+                <div class="metadata-grid">
+
+                    <div class="metadata-item">
+                        <strong>Question Type:</strong> definition
+                    </div>
+                    <div class="metadata-item">
+                        <strong>Complexity Score:</strong> 1.00
+                    </div>
+                    <div class="metadata-item">
+                        <strong>Word Count:</strong> 20
+                    </div>
+
+                    <div class="metadata-item">
+                        <strong>Entities:</strong> How, system?, scheduling, features, scheduled, create, Laravel,
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="query-box" style="margin-top: 15px;">
+                <strong>Enhanced Query:</strong><br>
+                how do i create a scheduled task in laravel, and what are the key features of its task scheduling system? tutorial guide instructions steps process methodology How system? scheduling features scheduled create Laravel,
+            </div>
+
+        </div>
+
+        <div class="section">
+            <h2>📈 Answer Quality</h2>
+            <div class="metadata">
+                <div class="metadata-grid">
+
+                    <div class="metadata-item">
+                        <strong>Overall Score:</strong> 0.72
+                    </div>
+                    <div class="metadata-item">
+                        <strong>Query Coverage:</strong> 0.74
+                    </div>
+                    <div class="metadata-item">
+                        <strong>Has Structure:</strong> Yes
+                    </div>
+                    <div class="metadata-item">
+                        <strong>Has Attribution:</strong> No
+                    </div>
+
+                </div>
+            </div>
+
+            <div style="margin-top: 15px;">
+                <strong>Quality Improvement Suggestions:</strong>
+                <ul>
+                    <li>Consider adding source references</li>
+                    <li>Low source confidence - consider expanding search</li>
+
+                </ul>
+            </div>
+
+        </div>
+
+        <div class="section">
+            <h2>🔗 Sources</h2>
+            <ul>
+                <li><a href="https://laravel.com/docs/12.x/scheduling" target="_blank">https://laravel.com/docs/12.x/scheduling</a></li>
+                <li><a href="https://laravel.com/docs/12.x/scheduling" target="_blank">https://laravel.com/docs/12.x/scheduling</a></li>
+                <li><a href="https://laravel.com/docs/12.x/scheduling" target="_blank">https://laravel.com/docs/12.x/scheduling</a></li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>🔍 Search Results</h2>
+
+            <div class="search-result">
+                <h3>Result 1 <span class="score">(Score: 0.795)</span></h3>
+                <p>Running the Scheduler * Sub-Minute Scheduled Tasks * Running the Scheduler Locally * Task Output * Task Hooks * Events ## Introduction In the past, you may have written a cron configuration entry for ...</p>
+            </div>
+
+            <div class="search-result">
+                <h3>Result 2 <span class="score">(Score: 0.728)</span></h3>
+                <p>nPingIf($condition, $url); Schedule::command('emails:send') ->daily() ->pingOnSuccessIf($condition, $successUrl) ->pingOnFailureIf($condition, $failureUrl); ## Events Laravel dispatches a variety of e...</p>
+            </div>
+
+            <div class="search-result">
+                <h3>Result 3 <span class="score">(Score: 0.708)</span></h3>
+                <p>`withSchedule` method in your application's `bootstrap/app.php` file to define your scheduled tasks. This method accepts a closure that receives an instance of the scheduler: 1use Illuminate\Console\S...</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📄 Full Context Provided to LLM</h2>
+            <div style="background: #f8f8f8; border: 1px solid #ddd; border-radius: 5px; padding: 15px; margin-top: 10px; overflow: auto; max-height: 500px;">
+                <pre style="margin: 0;">[Relevance: 0.503] Running the Scheduler * Sub-Minute Scheduled Tasks * Running the Scheduler Locally * Task Output * Task Hooks * Events ## Introduction In the past, you may have written a cron configuration entry for each task you needed to schedule on your server. However, this can quickly become a pain because your task schedule is no longer in source control and you must SSH into your server to view your existing cron entries or add additional entries. Laravel's command scheduler offers a fresh approach to managing scheduled tasks on your server. The scheduler allows you to fluently and expressively define your command schedule within your Laravel application itself. When using the scheduler, only a single cron entry is needed on your server. Your task schedule is typically defined in your application's `routes/console.php` file. ## Defining Schedules You may define all of your scheduled tasks in your application's `routes/console.php` file. To get started, let's take a look at an example. In this example, we will schedule a closure to be called every day at midnight.
+
+[Relevance: 0.464] nPingIf($condition, $url); Schedule::command('emails:send') ->daily() ->pingOnSuccessIf($condition, $successUrl) ->pingOnFailureIf($condition, $failureUrl); ## Events Laravel dispatches a variety of events during the scheduling process. You may define listeners for any of the following events: Event Name --- `Illuminate\Console\Events\ScheduledTaskStarting` `Illuminate\Console\Events\ScheduledTaskFinished` `Illuminate\Console\Events\ScheduledBackgroundTaskFinished` `Illuminate\Console\Events\ScheduledTaskSkipped` `Illuminate\Console\Events\ScheduledTaskFailed` ### On this page * Introduction * Defining Schedules * Scheduling Artisan Commands * Scheduling Queued Jobs * Scheduling Shell Commands * Schedule Frequency Options * Timezones * Preventing Task Overlaps * Running Tasks on One Server * Background Tasks * Maintenance Mode * Schedule Groups * Running the Scheduler * Sub-Min...</pre>
+            </div>
+            <p><em>Context truncated for display - full length: 3106 characters</em></p>
+        </div>
+
+        <div class="footer">
+            <p>Generated by RAG Pipeline with enhanced formatting</p>
+        </div>
+    </div>
+</body>
+</html>

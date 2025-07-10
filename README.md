@@ -199,6 +199,59 @@ python interface/cli.py
 streamlit run interface/streamlit_app.py
 ```
 
+## 🔥 Advanced RAG Enhancements
+
+### RAGEnhancer Module
+
+The project now includes a powerful `RAGEnhancer` module that improves RAG accuracy and performance:
+
+- **Hybrid Reranking**: Combines semantic, TF-IDF, and keyword-based ranking methods
+- **Context Selection**: Intelligently selects diverse and relevant context chunks
+- **Query Analysis**: Analyzes query complexity to adjust search strategy
+- **Context Quality Suggestions**: Identifies potential improvements to retrieved context
+
+### Enhanced Prompt Engineering
+
+- **Dynamic Prompting**: Adjusts prompts based on query type and complexity
+- **Structured Markdown Responses**: Formats answers with proper markdown structure
+- **Source Attribution**: Properly cites sources in generated answers
+- **Context-Aware Instructions**: Modifies instructions based on detected question type
+
+### Advanced Output Formatting
+
+- **Multiple Format Support**: Save results in both Markdown and HTML formats
+- **Detailed Metadata**: Includes query analysis, context quality, and answer quality metrics
+- **Professional Styling**: HTML output with responsive design and proper styling
+- **Quality Assessment**: Evaluates answer quality with specific improvement suggestions
+
+### Usage Example
+
+```python
+from api.rag_pipeline import RAGPipeline
+from api.result_formatter import ResultFormatter
+
+# Initialize pipeline and formatter
+rag_pipeline = RAGPipeline()
+formatter = ResultFormatter()
+
+# Process a website
+url = "https://tailwindcss.com/docs/adding-custom-styles"
+query = "How do I create custom utility classes in Tailwind CSS?"
+process_result = rag_pipeline.process_website(url=url, query=query)
+
+# Get the enhanced answer
+answer = rag_pipeline.answer_question(query=query, session_id=process_result['session_id'])
+
+# Save the result in multiple formats
+saved_files = formatter.save_both_formats(answer, "tailwind_custom_utilities")
+```
+
+Run the enhanced RAG pipeline test:
+
+```bash
+python test_enhanced_rag.py
+```
+
 ## 🔥 Bonus Features (Future Ideas)
 
 - **Chat History**: Maintain conversation history per website
