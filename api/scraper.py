@@ -4,23 +4,22 @@ from urllib.parse import urlparse, urljoin
 from time import sleep
 from playwright.sync_api import sync_playwright
 from dataHandler import DataHandler
-import os
 import numpy as np
-
+from config import RAGConfig
 
 class Scraper:
-    def __init__(self, url=None, max_retries=3, max_depth=1, sparse_content_threshold=750, mean_similarity_threshold=0.15, max_anchor_links=10):
+    def __init__(self, url=None):
         """
         Initialize the Scraper with a URL.
         """
+        self.config = RAGConfig()
         self.url = url
         self.base_url = self._get_base_url(url) if url else None
-        self.max_retries = max_retries
-        self.max_depth = max_depth
         self.data_handler = DataHandler()
-        self.sparse_content_threshold = sparse_content_threshold
-        self.mean_similarity_threshold = mean_similarity_threshold
-        self.max_anchor_links = max_anchor_links  # Maximum number of anchor links to scrape per page
+        self.max_depth = self.config.SCRAPER_MAX_DEPTH
+        self.sparse_content_threshold = self.config.SCRAPER_SPARSE_CONTENT_THRESHOLD
+        self.mean_similarity_threshold = self.config.SCRAPER_MEAN_SIMILARITY_THRESHOLD
+        self.max_anchor_links = self.config.SCRAPER_MAX_ANCHOR_LINKS
         self.current_anchor_links = 0  # Track current anchor links to avoid exceeding max_anchor_links
         # Headers to mimic a real browser
         self.headers = {
@@ -91,12 +90,13 @@ class Scraper:
             print("Falling back to regular requests...")
             return self._fetch_content(url, use_js=False)
         
-    def __get_anchor_tags(self, soup: bs):
+    def __get_anchor_tags(self, soup: bs, current_url: str):
         """
         Extract and resolve all internal anchor tag URLs from the given BeautifulSoup object.
         
         Args:
             soup (BeautifulSoup): The parsed HTML content.
+            current_url (str): The current URL being processed.
         
         Returns:
             list: A list of absolute URLs (within same domain).
@@ -116,7 +116,11 @@ class Scraper:
 
         # Determine base domain
         if not self.base_url:
-            self.base_url = self._get_base_url(self.url)
+            self.base_url = self._get_base_url(current_url)  # Use the current URL parameter
+        
+        if not self.base_url:  # If still None, return empty list
+            print("Could not determine base URL.")
+            return []
         
         base_domain = urlparse(self.base_url).netloc
 
@@ -140,9 +144,12 @@ class Scraper:
         Returns:
             str: The base URL.
         """
+        if not url:  # Handle None or empty string
+            return None
+            
         # First let's check if there is an http or https in the url
         if not url.startswith(('http://', 'https://')):
-            url = 'http://' + url
+            url = 'https://' + url  # Default to https instead of http
         # After that get the base url which is the domain name
         parsed_url = urlparse(url)
         return f"{parsed_url.scheme}://{parsed_url.netloc}"
@@ -194,7 +201,7 @@ class Scraper:
         if current_depth >= self.max_depth:
                 return [text_content]
         # Extract internal anchor tags
-        anchor_tags = self.__get_anchor_tags(soup)
+        anchor_tags = self.__get_anchor_tags(soup, url)
         if not anchor_tags:
             print("No internal links found.")
 
@@ -251,25 +258,62 @@ class Scraper:
             return soup.get_text()
         return ""
 
+    def __reset_anchor_links(self):
+        """
+        Reset the current anchor links count.
+        This is useful when starting a new scrape session.
+        """
+        self.current_anchor_links = 0
+
     # Keep the original scrape method for backward compatibility
-    def scrape(self, url=None , query=None, current_depth=0):
+    def scrape(self, url=None, query=None, current_depth=0):
         """
-        Original scrape method - now calls smart_scrape for better handling.
+        Simplified scraping pipeline - only stores what's actually needed.
+        
+        Returns:
+            dict: Essential data package for vector storage
         """
-        data = self.smart_scrape(url, query , current_depth) 
-        self.current_anchor_links = 0  # Reset anchor links count after scraping
-        return data
+        print(f"🚀 Starting scrape for query: '{query}' on URL: {url}")
+        
+        # 1. Scrape the content
+        raw_content_list = self.smart_scrape(url, query, current_depth)
+        self.__reset_anchor_links()
+        
+        if not raw_content_list:
+            print("❌ No content scraped")
+            return None
+        
+        # 2. Process query
+        _, query_embedding = self.data_handler.process_query(query)
+        
+        # 3. Process all scraped content into chunks
+        all_processed_chunks = []
+        all_chunk_embeddings = []
+        
+        print(f"📄 Processing {len(raw_content_list)} scraped pages...")
+        
+        for raw_content in raw_content_list:
+            # Process HTML content into chunks
+            processed_chunks, chunk_embeddings = self.data_handler.process_html(raw_content, True)
+            
+            if len(processed_chunks) > 0:
+                all_processed_chunks.extend(processed_chunks)
+                all_chunk_embeddings.extend(chunk_embeddings)
+        
+        if not all_processed_chunks:
+            print("❌ No valid chunks after processing")
+            return None
+        
+        # 4. Return only essential data
+        scrape_result = {
+            'query': query,
+            'query_embedding': query_embedding,
+            'processed_chunks': all_processed_chunks,
+            'chunk_embeddings': np.array(all_chunk_embeddings),
+            'source_url': url,
+            'total_chunks': len(all_processed_chunks)
+        }
+        
+        print(f"✅ Scrape complete: {len(all_processed_chunks)} chunks ready for storage")
+        return scrape_result
     
-# Example usage
-if __name__ == "__main__":
-    
-    # Create a directory to store scraped content
-    output_dir = "scraped_content"
-    
-    URL = "https://www.w3schools.com/css/css_align.asp"
-    scraper = Scraper(url=URL, max_retries=3, max_depth=3, sparse_content_threshold=750, mean_similarity_threshold=0.2, max_anchor_links=6)
-    
-    # Use smart scraping (automatically detects JS-heavy sites)
-    print("=== Smart Scraping ===")
-    contents = scraper.smart_scrape(query="How do I center a div in Tailwind CSS?")
-    print(f"Scraped {contents} pieces of content.")

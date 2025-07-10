@@ -4,16 +4,17 @@ import nltk
 from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
-# Import libraries for cosine similarity and vectorization
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 from html2text import HTML2Text
 import numpy as np
+from config import get_config
 
 class DataHandler:
     PATH="data"
     def __init__(self):
         self.saved_path = self.PATH
+        self.config = get_config()
         self._initialize_data()
     def _initialize_data(self):
         """
@@ -33,9 +34,10 @@ class DataHandler:
         self.html2text.ignore_links = True
         self.html2text.ignore_images = True
         
-        # Chunk size for splitting long texts
-        self.chunk_size = 500  # characters per chunk
-        self.chunk_overlap = 50  # overlap between chunks
+        # Configuration from centralized config
+        self.chunk_size = self.config.CHUNK_SIZE
+        self.chunk_overlap = self.config.CHUNK_OVERLAP
+        self.max_context_length = self.config.DATA_MAX_CONTEXT_LENGTH
         
         os.makedirs(self.saved_path, exist_ok=True)
         
@@ -139,17 +141,19 @@ class DataHandler:
         
         # Create both processed and original query embeddings
         processed_query = ' '.join(tokens)
-        query_embedding = self.model.encode(processed_query if processed_query else query)
+        query , query_embedding = self.get_embeddings(processed_query if processed_query else query)
 
         return tokens, query_embedding
 
-    def process_html(self, html_text_content):
+    def process_html(self, html_text_content , no_html_cleaning=False):
         """
         Enhanced HTML processing with chunking and quality filtering.
         """
         # Clean HTML content first
-        clean_text = self.clean_html_text(html_text_content)
-        
+        if  not no_html_cleaning:
+            clean_text = self.clean_html_text(html_text_content)
+        else:
+            clean_text = html_text_content
         # Chunk the text
         text_chunks = self.chunk_text(clean_text)
         
@@ -180,9 +184,22 @@ class DataHandler:
             return [], np.array([])
             
         # Embed the processed chunks
-        data_embeddings = self.model.encode(processed_chunks)
+        return self.get_embeddings(processed_chunks)
+    
+    def get_embeddings(self, chunks):
+        """
+        Get embeddings for the provided list of text documents.
         
-        return processed_chunks, data_embeddings
+        Args:
+            list: List of text chunks
+
+        Returns:
+            list: List of processed text chunks
+            np.array: Corresponding embeddings
+        """
+        data_embeddings = self.model.encode(chunks)
+        return chunks, data_embeddings
+    
     def compute_similarity(self, text_content, query, top_k=5):
         """
         Enhanced similarity computation with ranking and filtering.
@@ -219,18 +236,21 @@ class DataHandler:
         # Return top k results
         return chunk_scores[:top_k]
 
-    def get_relevant_context(self, text_content, query, max_context_length=2000):
+    def get_relevant_context(self, text_content, query, max_context_length=None):
         """
         Get the most relevant context for a query, respecting length limits.
         
         Args:
             text_content: Raw content to search
             query: User query
-            max_context_length: Maximum characters in returned context
+            max_context_length: Maximum characters in returned context (uses default if None)
             
         Returns:
             str: Concatenated relevant context
         """
+        if max_context_length is None:
+            max_context_length = self.max_context_length
+            
         similar_chunks = self.compute_similarity(text_content, query, top_k=10)
         
         if not similar_chunks:

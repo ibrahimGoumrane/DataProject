@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Pipeline Result</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            border-bottom: 3px solid #007acc;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #007acc;
+            margin: 0;
+        }
+        .timestamp {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #333;
+            border-left: 4px solid #007acc;
+            padding-left: 15px;
+            margin-bottom: 15px;
+        }
+        .query-box {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            font-style: italic;
+        }
+        .answer-box {
+            background: #fff;
+            border: 1px solid #007acc;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        .metadata {
+            background: #f8f9fa;
+            border-radius: 5px;
+            padding: 15px;
+        }
+        .metadata-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        .metadata-item {
+            padding: 8px;
+            background: white;
+            border-radius: 3px;
+            border-left: 3px solid #28a745;
+        }
+        .search-result {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            background: #fafafa;
+        }
+        .score {
+            color: #007acc;
+            font-weight: bold;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+        }
+        code {
+            background: #f1f1f1;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        pre {
+            background: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 RAG Pipeline Result</h1>
+            <p class="timestamp">Generated: 2025-07-10 15:32:56</p>
+        </div>
+
+        <div class="section">
+            <h2>❓ Query</h2>
+            <div class="query-box">
+                Which file do I need to edit to add custom styles in Tailwind CSS?
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>💡 Answer</h2>
+            <div class="answer-box">
+                <h2>Adding Custom Styles in Tailwind CSS</h2>
+<h3>Editing the File to Add Custom Styles</h3>
+<ul>
+<li>To add custom styles in Tailwind CSS, you need to edit a specific file as part of the build process.</li>
+<li>The file you need to edit to add custom styles in Tailwind CSS is the <strong>configuration file</strong> where you can customize Tailwind CSS settings and add additional styles.</li>
+</ul>
+<h3>Steps to Add Custom Styles:</h3>
+<ol>
+<li><strong>Build Process Setup:</strong></li>
+<li>Import Tailwind CSS and start the build process.</li>
+<li>
+<p>Run the build process using a command like <code>npm run dev</code>.</p>
+</li>
+<li>
+<p><strong>Configuring Tailwind CSS:</strong></p>
+</li>
+<li>Configure Tailwind CSS settings in the <strong>configuration file</strong>.</li>
+<li>
+<p>Add your custom styles and configurations in this file to extend Tailwind CSS functionality.</p>
+</li>
+<li>
+<p><strong>Common Approach with Vite:</strong></p>
+</li>
+<li>When using Vite, you can install and configure Tailwind CSS through npm.</li>
+<li>Add Tailwind CSS as a plugin in the Vite configuration file to integrate it into your project.</li>
+</ol>
+<h3>Limitation:</h3>
+<p>The provided context lacks specific details on the exact name of the configuration file or the directory where it is located. For precise instructions, additional information may be required.</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📊 Metadata</h2>
+            <div class="metadata">
+                <div class="metadata-grid">
+                    <div class="metadata-item">
+                        <strong>Confidence:</strong> 0.62
+                    </div>
+                    <div class="metadata-item">
+                        <strong>LLM Model:</strong> gpt-3.5-turbo
+                    </div>
+                    <div class="metadata-item">
+                        <strong>LLM Available:</strong> Yes
+                    </div>
+                    <div class="metadata-item">
+                        <strong>Tokens Used:</strong> 960
+                    </div>
+                    <div class="metadata-item">
+                        <strong>Session ID:</strong> N/A...
+                    </div>
+                    <div class="metadata-item">
+                        <strong>Context Used:</strong> 2015 chars
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🔗 Sources</h2>
+            <ul>
+                <li><a href="https://tailwindcss.com/docs/adding-custom-styles" target="_blank">https://tailwindcss.com/docs/adding-custom-styles</a></li>
+                <li><a href="https://tailwindcss.com/docs/adding-custom-styles" target="_blank">https://tailwindcss.com/docs/adding-custom-styles</a></li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>🔍 Search Results</h2>
+
+            <div class="search-result">
+                <h3>Result 1 <span class="score">(Score: 0.625)</span></h3>
+                <p>lly separately drawback using tailwind tool recommend avoiding style block component styling thing utility class directly markup way tailwind meant used use style block make sure import global style r...</p>
+            </div>
+
+            <div class="search-result">
+                <h3>Result 2 <span class="score">(Score: 0.619)</span></h3>
+                <p>utility div color using custom tailwind designed handle bulk styling need nothing stopping writing plain need import tailwindcss adding base style want set default page like text color background colo...</p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Generated by RAG Pipeline with enhanced formatting</p>
+        </div>
+    </div>
+</body>
+</html>
