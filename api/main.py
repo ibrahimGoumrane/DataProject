@@ -68,25 +68,13 @@ def test_enhanced_context():
     # Add the context to the answer for saving
     answer['full_context'] = enhanced_context
     
-    # Create the results directory if it doesn't exist
-    os.makedirs("results", exist_ok=True)
-    
     # Use the result formatter to save results in both formats
     saved_files = formatter.save_both_formats(answer, "enhanced_context_test_result")
-    
-    # Additionally, save the raw context that was given to the LLM
-    context_file_path = os.path.join("results", "enhanced_context_raw.txt")
-    with open(context_file_path, "w", encoding="utf-8") as f:
-        f.write(f"# Raw Context Provided to LLM\n\n")
-        f.write(f"## Query\n{complex_query}\n\n")
-        f.write(f"## Full Context ({len(enhanced_context)} characters)\n\n")
-        f.write(enhanced_context)
     
     print(f"\n✅ Test complete!")
     print(f"Results saved to:")
     print(f"  - Markdown: {saved_files['markdown']}")
     print(f"  - HTML: {saved_files['html']}")
-    print(f"  - Raw Context: {context_file_path}")
 
 if __name__ == "__main__":
     test_enhanced_context()
