@@ -96,8 +96,8 @@ class RAGPipeline:
         except Exception as e:
             print(f"❌ Storage error: {e}")
             return {"error": f"Storage failed: {e}", "success": False}
-    
-    def answer_question(self, query: str, session_id: Optional[str] = None) -> Dict:
+
+    def answer_question(self, query: str, session_id: Optional[str] = None , urls: Optional[List[str]] = []) -> Dict:
         """
         Answer a question using stored content with enhanced accuracy.
         
@@ -158,7 +158,7 @@ class RAGPipeline:
         
         # 5. Get enhanced context
         enhanced_context = self.enhancer.enhance_context_selection(
-            query, enhanced_results, self.config.MAX_CONTEXT_LENGTH
+            query, enhanced_results, self.config.MAX_CONTEXT_LENGTH , session_id=session_id, urls=urls
         )
         
         # 6. Analyze context quality

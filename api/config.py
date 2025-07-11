@@ -40,7 +40,8 @@ class RAGConfig:
         self.SCRAPER_MEAN_SIMILARITY_THRESHOLD = self._get_float('SCRAPER_MEAN_SIMILARITY_THRESHOLD', 0.3)
         # Storage Settings
         self.STORAGE_DIR = os.getenv('STORAGE_DIR', 'storage')
-
+        # Degrading Factor for Chunks without the same url
+        self.DEGRADING_FACTOR = self._get_float('DEGRADING_FACTOR', 0.5)
         
     def _get_int(self, key: str, default: int) -> int:
         """Get integer value from environment variable."""

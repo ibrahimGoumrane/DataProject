@@ -303,6 +303,8 @@ class VectorStore:
             'total_sessions': len(self.list_sessions())
         }
     
+
+
     def clear_index_store_by_session(self, session_id: str) -> bool:
         """
         Clear all data associated with a specific session ID.

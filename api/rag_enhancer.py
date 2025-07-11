@@ -4,10 +4,11 @@ Provides advanced features to improve RAG accuracy and performance.
 """
 
 import numpy as np
-from typing import Dict, List
+from typing import Dict, List, Optional
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import re
+from config import RAGConfig
 
 class RAGEnhancer:
     """
@@ -22,6 +23,7 @@ class RAGEnhancer:
             ngram_range=(1, 2)
         )
         self.query_cache = {}
+        self.config = RAGConfig()  # Load configuration settings
         
     def rerank_search_results(self, query: str, search_results: List[Dict], 
                             method: str = 'hybrid') -> List[Dict]:
@@ -143,7 +145,7 @@ class RAGEnhancer:
         return scores
     
     def enhance_context_selection(self, query: str, search_results: List[Dict], 
-                                max_context_length: int = 10000) -> str:
+                                max_context_length: int = 10000 , session_id: Optional[str] = None , urls: Optional[List[str]] = None) -> str:
         """
         Intelligently select and combine context from search results,
         preserving more of the original content.
@@ -179,6 +181,7 @@ class RAGEnhancer:
                 selected_chunks.append({
                     'chunk': chunk,
                     'rerank_score': result.get('rerank_score', result.get('similarity_score', 0)),
+                    'url': result.get('metadata', {}).get('source_url', '')
                 })
                 seen_chunks.add(chunk)
                 total_length += len(chunk)
@@ -190,16 +193,25 @@ class RAGEnhancer:
                     selected_chunks.append({
                         'chunk': partial_chunk,
                         'rerank_score': result.get('rerank_score', result.get('similarity_score', 0)),
+                        'url': result.get('metadata', {}).get('source_url', '')
                     })
                 break
+        print(f"Urls of the processed chunks: {[chunk['url'] for chunk in selected_chunks]}")
         
+        # Degrading Factor for Chunks without the same url
+        degrading_factor = self.config.DEGRADING_FACTOR
         # Combine chunks with relevance indicators
         context_parts = []
         for chunk_data in selected_chunks:
             chunk = chunk_data['chunk']
             score = chunk_data['rerank_score']
-            context_parts.append(f"[Relevance: {score:.3f}] {chunk}")
-        
+            if  session_id:
+                context_parts.append(f"[Relevance: {score:.3f}] {chunk}")
+            else:
+                if urls :
+                    score = degrading_factor * score if chunk_data['url'] not in urls else score
+                context_parts.append(f"[Relevance: {score:.3f}] {chunk}")
+
         return "\n\n".join(context_parts)
     
     def _is_redundant(self, new_chunk: str, existing_chunks: List[str], 

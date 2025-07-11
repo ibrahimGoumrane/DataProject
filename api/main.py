@@ -20,6 +20,25 @@ def run_interactive_cli(existing_session_id=None):
     print(f"Maximum context length: {config.MAX_CONTEXT_LENGTH} characters")
     print(f"Chunk size: {config.CHUNK_SIZE} characters")
     
+    # Ask user about context preference
+    print("\n🔧 CONTEXT MODE SELECTION")
+    print("========================")
+    print("1. Use only content from your provided URLs (focused)")
+    print("2. Enhanced context mode (includes broader search)")
+    
+    while True:
+        context_choice = input("\nChoose context mode (1 or 2): ").strip()
+        if context_choice in ['1', '2']:
+            break
+        print("Please enter 1 or 2")
+    
+    use_session_only = context_choice == '1'
+    
+    if use_session_only:
+        print("✅ Using focused mode - only content from your URLs")
+    else:
+        print("✅ Using enhanced mode - broader context search")
+    
     # Use existing session if provided
     session_id = existing_session_id
     websites_processed = []
@@ -103,6 +122,7 @@ def run_interactive_cli(existing_session_id=None):
     for i, website in enumerate(websites_processed, 1):
         print(f"  {i}. {website}")
     print(f"Session ID: {session_id}")
+    print(f"Context mode: {'Focused (URLs only)' if use_session_only else 'Enhanced (broader search)'}")
     
     # Step 3: Ask questions
     print("\n❓ ASK QUESTIONS")
@@ -116,7 +136,10 @@ def run_interactive_cli(existing_session_id=None):
             break
             
         print(f"\n🔍 Searching for answer to: {query}")
-        answer = pipeline.answer_question(query, session_id)
+        
+        # Use session-only search if user chose focused mode
+        search_session_id = session_id if use_session_only else None
+        answer = pipeline.answer_question(query, search_session_id)
         
         # Print the answer
         print("\n📝 ANSWER:")
@@ -127,6 +150,7 @@ def run_interactive_cli(existing_session_id=None):
         print(f"\n📊 CONTEXT USAGE:")
         print(f"Context length: {answer.get('context_used', 0)} characters")
         print(f"Sources: {len(answer.get('sources', []))} chunks from {len(set([s.get('source_url', '') for s in answer.get('sources', [])]))} websites")
+        print(f"Search mode: {'Session-only' if use_session_only else 'All content'}")
         
         # Ask if user wants to save the result
         save_result = input("\nSave this result? (y/n): ").lower()
@@ -163,176 +187,14 @@ def run_interactive_cli(existing_session_id=None):
     
     return session_id
 
-def test_enhanced_context():
-    """Test the RAG pipeline with enhanced context size."""
-    # Initialize the pipeline
-    pipeline = RAGPipeline()
-    
-    # Check the configuration
-    config = get_config()
-    
-    # Initialize the result formatter
-    formatter = ResultFormatter(output_dir="results")
-    
-    # Print the context size
-    print(f"\n🔍 CONTEXT SIZE TEST")
-    print(f"====================")
-    print(f"Maximum context length: {config.MAX_CONTEXT_LENGTH} characters")
-    print(f"Chunk size: {config.CHUNK_SIZE} characters")
-    print(f"Chunk overlap: {config.CHUNK_OVERLAP} characters")
-    print(f"Max tokens: {config.MAX_TOKENS} tokens")
-    
-    # Load a test HTML file (or use a live website)
-    test_url = "https://laravel.com/docs/12.x/scheduling"
-    query = " How does Laravel's task scheduling work and what are the key features?"
-    # Process the website
-    print(f"\n🌐 Processing website: {test_url}")
-    result = pipeline.process_website(
-        url=test_url,
-        query=query
-    )
-    
-    if not result.get('success', False):
-        print(f"❌ Failed to process website: {result.get('error')}")
-        return
-    
-    print(f"✅ Website processed successfully")
-    print(f"Session ID: {result['session_id']}")
-    print(f"Chunks stored: {result['chunks_stored']}")
-    
-    # Now ask a complex question that requires extensive context
-    complex_query = "How do i create a scheduled task in Laravel, and what are the key features of its task scheduling system?"
-    
-    print(f"\n❓ Asking complex question: {complex_query}")
-    answer = pipeline.answer_question(complex_query, result['session_id'])
-    
-    # Print the answer metadata to analyze context usage
-    print(f"\n📊 CONTEXT USAGE ANALYSIS")
-    print(f"=========================")
-    print(f"Context length used: {answer.get('context_used', 0)} characters")
-    print(f"Query complexity: {answer.get('query_analysis', {}).get('complexity_score', 0)}")
-    print(f"Suggested k: {answer.get('query_analysis', {}).get('suggested_k', 0)}")
-    print(f"Search results retrieved: {len(answer.get('search_results', []))}")
-        
-    
-    # Extract the context provided to the LLM
-    enhanced_context = pipeline.enhancer.enhance_context_selection(
-        complex_query, 
-        answer.get('search_results', []), 
-        config.MAX_CONTEXT_LENGTH
-    )
-    
-    # Add the context to the answer for saving
-    answer['full_context'] = enhanced_context
-    
-    # Use the result formatter to save results in both formats
-    saved_files = formatter.save_both_formats(answer, "enhanced_context_test_result")
-    
-    print(f"\n✅ Test complete!")
-    print(f"Results saved to:")
-    print(f"  - Markdown: {saved_files['markdown']}")
-    print(f"  - HTML: {saved_files['html']}")
-
-def test_multi_website_context():
-    """Test processing multiple websites under a single session ID."""
-    # Initialize the pipeline
-    pipeline = RAGPipeline()
-    
-    # Check the configuration
-    config = get_config()
-    
-    # Initialize the result formatter
-    formatter = ResultFormatter(output_dir="results")
-    
-    # Print the context size
-    print(f"\n🔍 MULTI-WEBSITE CONTEXT TEST")
-    print(f"============================")
-    print(f"Maximum context length: {config.MAX_CONTEXT_LENGTH} characters")
-    
-    # Process the first website
-    first_url = "https://laravel.com/docs/12.x/scheduling"
-    first_query = "How does Laravel's task scheduling work?"
-    
-    print(f"\n🌐 Processing first website: {first_url}")
-    first_result = pipeline.process_website(
-        url=first_url,
-        query=first_query
-    )
-    
-    if not first_result.get('success', False):
-        print(f"❌ Failed to process first website: {first_result.get('error')}")
-        return
-    
-    print(f"✅ First website processed successfully")
-    print(f"Session ID: {first_result['session_id']}")
-    print(f"Chunks stored: {first_result['chunks_stored']}")
-    
-    # Store the session ID to use for the second website
-    combined_session_id = first_result['session_id']
-    
-    # Process a second related website and add to the same session
-    second_url = "https://laravel.com/docs/12.x/queues"
-    second_query = "How do Laravel queues work with scheduled tasks?"
-    
-    print(f"\n🌐 Processing second website: {second_url}")
-    print(f"📌 Appending to session: {combined_session_id}")
-    
-    second_result = pipeline.process_website(
-        url=second_url,
-        query=second_query,
-        session_id=combined_session_id  # Reuse the same session ID
-    )
-    
-    if not second_result.get('success', False):
-        print(f"❌ Failed to process second website: {second_result.get('error')}")
-        return
-    
-    print(f"✅ Second website processed successfully")
-    print(f"Combined session ID: {second_result['session_id']}")
-    print(f"Additional chunks stored: {second_result['chunks_stored']}")
-    
-    # Now ask a complex question that requires context from both websites
-    complex_query = "How can I create a scheduled task in Laravel that dispatches jobs to a queue, and what are the advantages of this approach?"
-    
-    print(f"\n❓ Asking question requiring context from both websites: {complex_query}")
-    answer = pipeline.answer_question(complex_query, combined_session_id)
-    
-    # Print the answer metadata to analyze context usage
-    print(f"\n📊 CONTEXT USAGE ANALYSIS")
-    print(f"=========================")
-    print(f"Context length used: {answer.get('context_used', 0)} characters")
-    print(f"Query complexity: {answer.get('query_analysis', {}).get('complexity_score', 0)}")
-    print(f"Suggested k: {answer.get('query_analysis', {}).get('suggested_k', 0)}")
-    print(f"Search results retrieved: {len(answer.get('search_results', []))}")
-    
-    # Extract the context provided to the LLM
-    enhanced_context = pipeline.enhancer.enhance_context_selection(
-        complex_query, 
-        answer.get('search_results', []), 
-        config.MAX_CONTEXT_LENGTH
-    )
-    
-    # Add the context to the answer for saving
-    answer['full_context'] = enhanced_context
-    
-    # Use the result formatter to save results in both formats
-    saved_files = formatter.save_both_formats(answer, "multi_website_context_test")
-    
-    print(f"\n✅ Test complete!")
-    print(f"Results saved to:")
-    print(f"  - Markdown: {saved_files['markdown']}")
-    print(f"  - HTML: {saved_files['html']}")
-
 if __name__ == "__main__":
-    print("\nEnhanced RAG Pipeline with Multi-Website Support")
-    print("===============================================")
-    print("1. Interactive CLI Mode (New Session)")
-    print("2. Resume Existing Session")
-    print("3. Enhanced Context Test (single website)")
-    print("4. Multi-Website Context Test")
-    print("5. Exit")
+    print("\n🤖 Enhanced RAG Pipeline")
+    print("========================")
+    print("1. Start new session")
+    print("2. Resume existing session")
+    print("3. Exit")
     
-    choice = input("\nEnter your choice (1-5): ")
+    choice = input("\nEnter your choice (1-3): ")
     
     if choice == "1":
         run_interactive_cli()
@@ -347,19 +209,19 @@ if __name__ == "__main__":
             session_info = pipeline.storage_manager.vector_store.get_session_info(session_id)
             if session_info:
                 print(f"✅ Session found: {session_id}")
-                print(f"Original URL: {session_info.get('source_url', 'Unknown')}")
-                print(f"Original query: {session_info.get('query', 'Unknown')}")
+                if 'websites' in session_info and session_info['websites']:
+                    print(f"Websites in session: {len(session_info['websites'])}")
+                    for i, website in enumerate(session_info['websites'], 1):
+                        print(f"  {i}. {website.get('source_url', 'Unknown')}")
+                else:
+                    print(f"Original URL: {session_info.get('source_url', 'Unknown')}")
                 print(f"Created: {session_info.get('storage_timestamp', 'Unknown')}")
-                run_interactive_cli()
+                run_interactive_cli(session_id)
             else:
                 print(f"❌ Session not found: {session_id}")
         else:
             print("❌ No session ID provided.")
     elif choice == "3":
-        test_enhanced_context()
-    elif choice == "4":
-        test_multi_website_context()
-    elif choice == "5":
-        print("Exiting...")
+        print("👋 Goodbye!")
     else:
         print("Invalid choice. Please run again and select a valid option.")

@@ -1,153 +1,36 @@
 {
-  "35d8efeb-1c3d-488e-8227-ec488f16161e": {
-    "query": "Which file do i need to edit to add custom styles in Tailwind CSS?",
-    "source_url": "https://tailwindcss.com/docs/adding-custom-styles",
-    "total_chunks": 217,
-    "storage_timestamp": "2025-07-10T15:26:28.515203"
-  },
-  "ad49d7da-12b4-47e0-882e-ce5190da8b59": {
-    "query": "Which file do I need to edit to add custom styles in Tailwind CSS?",
-    "source_url": "https://tailwindcss.com/docs/adding-custom-styles",
-    "total_chunks": 202,
-    "storage_timestamp": "2025-07-10T15:32:53.158882"
-  },
-  "809d5a86-09d4-4cd9-9ea8-229716d92976": {
-    "query": "What is the React Virtual DOM and why is it important?",
-    "source_url": "https://react.dev/learn",
-    "total_chunks": 475,
-    "storage_timestamp": "2025-07-10T16:48:34.554853"
-  },
-  "129b8149-196b-461b-87d0-6b479b448ef2": {
-    "query": " How does Laravel's task scheduling work and what are its key features?",
-    "source_url": "https://laravel.com/docs/12.x/scheduling",
-    "total_chunks": 389,
-    "storage_timestamp": "2025-07-10T17:35:07.347178"
-  },
-  "63143e41-2f62-4e0a-b66b-4caf3abfc5ab": {
-    "query": " How does Laravel's task scheduling work and what are its key features?",
-    "source_url": "https://laravel.com/docs/12.x/scheduling",
-    "total_chunks": 284,
-    "storage_timestamp": "2025-07-10T17:36:58.955487"
-  },
-  "0c22c3f0-33fc-49e7-a4d0-ffb5fc6eb606": {
-    "query": " How does Laravel's task scheduling work and what are its key features?",
-    "source_url": "https://laravel.com/docs/12.x/scheduling",
-    "total_chunks": 435,
-    "storage_timestamp": "2025-07-10T17:43:01.322218"
-  },
-  "cca7906d-057d-4317-88e4-c85265610bc4": {
-    "query": " How does Laravel's task scheduling work and what are its key features?",
-    "source_url": "https://laravel.com/docs/12.x/scheduling",
-    "total_chunks": 941,
-    "storage_timestamp": "2025-07-10T17:54:05.827414"
-  },
-  "a92ccc18-ee0b-4147-9176-797151172883": {
-    "query": "How do Laravel queues work with scheduled tasks?",
-    "source_url": "https://laravel.com/docs/12.x/queues",
-    "total_chunks": 706,
-    "storage_timestamp": "2025-07-10T18:28:51.200729"
-  },
-  "375c50c9-926d-4b95-96e5-6f5518976002": {
-    "query": "How do Laravel queues work with scheduled tasks?",
-    "source_url": "https://laravel.com/docs/12.x/queues",
-    "total_chunks": 657,
-    "storage_timestamp": "2025-07-10T18:37:34.934341"
-  },
-  "18ffcd01-8be4-4fe5-bc51-78572a9690db": {
-    "query": "How do Laravel queues work with scheduled tasks?",
-    "source_url": "https://laravel.com/docs/12.x/queues",
-    "total_chunks": 835,
-    "storage_timestamp": "2025-07-10T18:50:23.079525"
-  },
-  "f22b7811-7e58-4257-899e-a9fe803ba15a": {
-    "query": "How do Laravel queues work with scheduled tasks?",
-    "source_url": "https://laravel.com/docs/12.x/queues",
-    "total_chunks": 825,
-    "storage_timestamp": "2025-07-10T18:54:24.547064"
-  },
-  "ebba8af4-3250-4af5-8889-c11781bc60c4": {
-    "query": "This is shows that the tailwind css has receives a v4 Which changes a lot of configuration stuff",
-    "source_url": "https://tailwindcss.com/blog/tailwindcss-v4",
-    "total_chunks": 132,
-    "storage_timestamp": "2025-07-10T18:59:21.846731"
-  },
-  "f939cdf2-19b5-48b6-b52c-00b387162ac7": {
-    "query": "Linkedin Page for user ibrahim goumrane",
-    "source_url": "https://www.linkedin.com/in/ibrahim-goumrane/",
-    "total_chunks": 112,
-    "storage_timestamp": "2025-07-10T19:17:47.112334"
-  },
-  "1e942d29-a1c5-45c2-8f44-c73a4fee3246": {
-    "query": "This is the setup of nextjs with tailwind css",
-    "source_url": "https://tailwindcss.com/docs/installation/framework-guides/nextjs",
-    "total_chunks": 125,
-    "storage_timestamp": "2025-07-10T19:22:26.468654"
-  },
-  "2c4cf2f7-2cba-43d5-81ff-fdd9e379ff4e": {
-    "query": "This is the home page of tailwind css",
-    "source_url": "https://tailwindcss.com/",
-    "total_chunks": 44,
-    "storage_timestamp": "2025-07-10T19:27:31.966004"
-  },
-  "37cc936d-c6bc-46c0-8016-b86338658944": {
-    "query": "This is the page for customizing ur styles in tailwind css",
-    "source_url": "https://tailwindcss.com/docs/adding-custom-styles",
-    "total_chunks": 95,
-    "storage_timestamp": "2025-07-10T19:32:30.046595"
-  },
-  "776e5423-09fe-4393-8b23-0c30a7e05982": {
-    "query": "This how u customize Style in tailwind css",
-    "source_url": "https://tailwindcss.com/docs/adding-custom-styles",
-    "total_chunks": 80,
-    "storage_timestamp": "2025-07-10T19:48:45.308749",
+  "648ae23b-375c-43cf-b63e-a95d4f9f04b1": {
+    "query": "Hugging page models for image to text conversion",
+    "source_url": "https://huggingface.co/models?pipeline_tag=image-text-to-text&sort=trending",
+    "total_chunks": 153,
+    "storage_timestamp": "2025-07-11T12:42:55.189361",
     "websites": [
       {
-        "source_url": "https://tailwindcss.com/docs/adding-custom-styles",
-        "query": "This how u customize Style in tailwind css",
-        "chunks_added": 80,
-        "added_timestamp": "2025-07-10T19:48:45.308749"
+        "source_url": "https://huggingface.co/models?pipeline_tag=image-text-to-text&sort=trending",
+        "query": "Hugging page models for image to text conversion",
+        "chunks_added": 153,
+        "added_timestamp": "2025-07-11T12:42:55.189361"
       },
       {
-        "source_url": "https://tailwindcss.com/blog/tailwindcss-v4",
-        "query": "This is the new version fo tailwind css ",
-        "chunks_added": 112,
-        "added_timestamp": "2025-07-10T19:50:14.423311"
+        "source_url": "https://www.kaggle.com/models",
+        "query": "This is kaggle models page that offer ready to use models",
+        "chunks_added": 19,
+        "added_timestamp": "2025-07-11T12:46:12.384932"
       }
     ],
-    "last_updated": "2025-07-10T19:50:14.423311"
+    "last_updated": "2025-07-11T12:46:12.384932"
   },
-  "5217c98c-6865-4af7-a191-089254f54fdf": {
-    "query": "This is the official next js doc page",
-    "source_url": "https://nextjs.org/docs",
-    "total_chunks": 159,
-    "storage_timestamp": "2025-07-10T20:01:45.920745",
+  "1a43e876-37de-4a6c-9a4a-184732a01e78": {
+    "query": "This is the text to speech models ",
+    "source_url": "https://huggingface.co/models?pipeline_tag=text-to-speech&sort=trending",
+    "total_chunks": 4299,
+    "storage_timestamp": "2025-07-11T13:13:06.579248",
     "websites": [
       {
-        "source_url": "https://nextjs.org/docs",
-        "query": "This is the official next js doc page",
-        "chunks_added": 159,
-        "added_timestamp": "2025-07-10T20:01:45.920745"
-      },
-      {
-        "source_url": "https://nextjs.org/docs/app/guides/custom-server",
-        "query": "this how you deploy next js in a custom server",
-        "chunks_added": 160,
-        "added_timestamp": "2025-07-10T20:02:23.837181"
-      }
-    ],
-    "last_updated": "2025-07-10T20:02:23.837181"
-  },
-  "e0f72ba6-4582-4335-b2dd-7156238a97f1": {
-    "query": "next js static export",
-    "source_url": "https://nextjs.org/docs/pages/guides/static-exports",
-    "total_chunks": 149,
-    "storage_timestamp": "2025-07-10T20:07:31.895123",
-    "websites": [
-      {
-        "source_url": "https://nextjs.org/docs/pages/guides/static-exports",
-        "query": "next js static export",
-        "chunks_added": 149,
-        "added_timestamp": "2025-07-10T20:07:31.895123"
+        "source_url": "https://huggingface.co/models?pipeline_tag=text-to-speech&sort=trending",
+        "query": "This is the text to speech models ",
+        "chunks_added": 4299,
+        "added_timestamp": "2025-07-11T13:13:06.579248"
       }
     ]
   }
