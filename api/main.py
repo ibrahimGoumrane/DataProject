@@ -40,29 +40,11 @@ def run_interactive_cli(existing_session_id=None):
     else:
         print("✅ Using enhanced mode - broader context search")
     
-    # Ask user about scraping performance
-    print("\n⚡ SCRAPING PERFORMANCE SELECTION")
-    print("================================")
-    print("1. Sequential scraping (slower but more reliable)")
-    print("2. Parallel scraping (faster but uses more resources)")
-    print("3. Auto-detect (tries parallel, falls back to sequential)")
-    
-    while True:
-        scraping_choice = input("\nChoose scraping mode (1-3): ").strip()
-        if scraping_choice in ['1', '2', '3']:
-            break
-        print("Please enter 1, 2, or 3")
-    
-    # Set scraping mode
-    if scraping_choice == '1':
-        use_async = False
-        print("✅ Using sequential scraping - reliable and respectful")
-    elif scraping_choice == '2':
-        use_async = True
-        print("✅ Using parallel scraping - faster processing")
-    else:  # scraping_choice == '3'
-        use_async = True
-        print("✅ Using auto-detect - parallel with sequential fallback")
+    # Always use async scraping (removed choice)
+    use_async = True
+    print("\n⚡ SCRAPING MODE")
+    print("===============")
+    print("✅ Using async parallel scraping - optimized for speed and efficiency")
     
     # Use existing session if provided
     session_id = existing_session_id
@@ -113,7 +95,7 @@ def run_interactive_cli(existing_session_id=None):
             
         print(f"\n🌐 Processing website: {url}")
         print(f"📝 Query: {query}")
-        print(f"⚡ Mode: {'Parallel' if use_async else 'Sequential'}")
+        print(f"⚡ Mode: Async Parallel")
         
         if session_id:
             print(f"📌 Appending to existing session: {session_id}")
@@ -142,11 +124,11 @@ def run_interactive_cli(existing_session_id=None):
         
         print(f"✅ Website processed successfully")
         print(f"⏱️ Processing time: {processing_time:.2f} seconds")
-        print(f"📊 Performance: {'Parallel' if use_async else 'Sequential'} scraping")
+        print(f"📊 Performance: Async Parallel scraping")
         print(f"🆔 Session ID: {result['session_id']}")
         print(f"📦 Chunks stored: {result['chunks_stored']}")
         
-        # Show performance benefit if parallel was used
+        # Show performance benefit of parallel scraping
         if use_async and processing_time > 0:
             estimated_sequential_time = processing_time * 2.5  # Rough estimate
             print(f"📈 Estimated sequential time: {estimated_sequential_time:.2f}s")
@@ -168,7 +150,7 @@ def run_interactive_cli(existing_session_id=None):
         print(f"  {i}. {website}")
     print(f"Session ID: {session_id}")
     print(f"Context mode: {'Focused (URLs only)' if use_session_only else 'Enhanced (broader search)'}")
-    print(f"Scraping mode: {'Parallel (Async)' if use_async else 'Sequential'}")
+    print(f"Scraping mode: Async Parallel")
     
     if use_async:
         print("\n⚡ ASYNC SCRAPING INFO")

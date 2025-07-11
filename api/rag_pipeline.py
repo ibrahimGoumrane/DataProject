@@ -44,7 +44,7 @@ class RAGPipeline:
         print(f"🔑 OpenAI: {'✅ Available' if self.llm.is_available() else '❌ Not configured'}")
         print("🚀 Enhanced RAG features enabled")
     
-    def process_website(self, url: str, query: str, session_id: Optional[str] = None, use_async: bool = False) -> Dict:
+    def process_website(self, url: str, query: str, session_id: Optional[str] = None, use_async: bool = True) -> Dict:
         """
         Complete pipeline: scrape website and store in vector database.
         
@@ -59,35 +59,19 @@ class RAGPipeline:
         """
         print(f"🚀 Processing website: {url}")
         print(f"📝 Query: {query}")
-        print(f"⚡ Scraping mode: {'Parallel (Async)' if use_async else 'Sequential'}")
+        print(f"⚡ Scraping mode: Async Parallel")
         
-        # 1. Scrape the website - choose between async and sequential
+        # 1. Scrape the website using async parallel scraping
         try:
-            if use_async:
-                print("🔄 Using async parallel scraping...")
-                scrape_result = self.scraper.scrape_parallel(url=url, query=query)
-            else:
-                print("🔄 Using sequential scraping...")
-                scrape_result = self.scraper.enhanced_scrape(url=url, query=query)
+            print("🔄 Using async parallel scraping...")
+            scrape_result = self.scraper.scrape_parallel(url=url, query=query)
             
             if not scrape_result:
                 return {"error": "Failed to scrape website", "success": False}
                 
         except Exception as e:
-            print(f"❌ Scraping error: {e}")
-            
-            # If async scraping failed, fall back to sequential
-            if use_async:
-                print("🔄 Async scraping failed, falling back to sequential...")
-                try:
-                    scrape_result = self.scraper.enhanced_scrape(url=url, query=query)
-                    if not scrape_result:
-                        return {"error": "Both async and sequential scraping failed", "success": False}
-                except Exception as e2:
-                    print(f"❌ Sequential fallback also failed: {e2}")
-                    return {"error": f"All scraping methods failed: {e}, {e2}", "success": False}
-            else:
-                return {"error": f"Sequential scraping failed: {e}", "success": False}
+            print(f"❌ Async scraping error: {e}")
+            return {"error": f"Async scraping failed: {e}", "success": False}
         
         # 2. Store in vector database
         try:
@@ -426,7 +410,7 @@ class RAGPipeline:
         
         return quality_metrics
     
-    def process_website_with_performance_metrics(self, url: str, query: str, session_id: Optional[str] = None, use_async: bool = False) -> Dict:
+    def process_website_with_performance_metrics(self, url: str, query: str, session_id: Optional[str] = None, use_async: bool = True) -> Dict:
         """
         Process website with detailed performance metrics.
         
@@ -452,9 +436,9 @@ class RAGPipeline:
             result.update({
                 'performance_metrics': {
                     'processing_time': processing_time,
-                    'scraping_mode': 'parallel' if use_async else 'sequential',
+                    'scraping_mode': 'async_parallel',
                     'chunks_per_second': result.get('chunks_stored', 0) / processing_time if processing_time > 0 else 0,
-                    'estimated_speedup': 2.5 if use_async else 1.0  # Rough estimate
+                    'estimated_speedup': 2.5  # Async parallel speedup estimate
                 }
             })
         
