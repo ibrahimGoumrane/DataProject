@@ -143,15 +143,6 @@ class ResultFormatter:
             
             md_content += "\n"
 
-        # Add sources if available
-        sources = result.get('sources', [])
-        if sources:
-            md_content += "## Sources\n\n"
-            for i, source in enumerate(sources, 1):
-                source_url = source.get('source_url', 'Unknown')
-                md_content += f"{i}. [{source_url}]({source_url})\n"
-            md_content += "\n"
-        
         # Add search results if available
         search_results = result.get('search_results', [])
         if search_results:
@@ -455,21 +446,6 @@ class ResultFormatter:
 """
             
             html_content += """
-        </div>
-"""
-
-        # Add sources if available
-        sources = result.get('sources', [])
-        if sources:
-            html_content += """
-        <div class="section">
-            <h2>🔗 Sources</h2>
-            <ul>
-"""
-            for source in sources:
-                source_url = source.get('source_url', 'Unknown')
-                html_content += f'                <li><a href="{source_url}" target="_blank">{source_url}</a></li>\n'
-            html_content += """            </ul>
         </div>
 """
 

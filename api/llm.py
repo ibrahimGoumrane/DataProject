@@ -148,22 +148,12 @@ class LLM:
         if len(context) > self.config.MAX_CONTEXT_LENGTH:
             context = context[:self.config.MAX_CONTEXT_LENGTH] + "..."
         
-        # Extract source URLs for citations
-        sources = []
+        # Extract metadata for analysis
         metadata_list = []
         for result in search_results[:5]:  # Top 5 sources
             if 'metadata' in result:
-                if 'source_url' in result['metadata']:
-                    sources.append(result['metadata']['source_url'])
                 metadata_list.append(result['metadata'])
         
-        # Create a formatted sources section
-        sources_text = ""
-        if sources:
-            sources_text = "SOURCES:\n" + "\n".join([f"- {url}" for url in set(sources)])
-        else:
-            sources_text = "SOURCES:\n- No specific sources available"
-            
         # Get question type hints
         question_type = ""
         if search_results and 'query_analysis' in search_results[0]:
@@ -172,11 +162,11 @@ class LLM:
         # Add specific instructions based on question type
         type_specific_instructions = ""
         if question_type == 'procedural':
-            type_specific_instructions = "Since this is a procedural question, organize your answer as a step-by-step guide with clear instructions."
+            type_specific_instructions = "Since this is a procedural question, organize your answer as a step-by-step guide with clear instructions based on the context."
         elif question_type == 'definition':
-            type_specific_instructions = "Since this is a definition question, start with a clear, concise definition before providing more details."
+            type_specific_instructions = "Since this is a definition question, start with a clear, concise definition based on the context before providing more details."
         elif question_type == 'comparative':
-            type_specific_instructions = "Since this is a comparative question, organize your answer to clearly contrast the items being compared."
+            type_specific_instructions = "Since this is a comparative question, organize your answer to clearly contrast the items being compared using information from the context."
         
         prompt = f"""
 QUESTION: {query}
@@ -184,28 +174,31 @@ QUESTION: {query}
 RELEVANT CONTEXT:
 {context}
 
-{sources_text}
+CRITICAL INSTRUCTIONS - CONTEXT DEPENDENCY:
+You MUST base your answer primarily on the provided context above. Follow this strict hierarchy:
+- 80% of your answer MUST come from the provided context
+- Only 20% can come from your general knowledge to fill minor gaps
+- If the context doesn't contain sufficient information, clearly state what's missing rather than inventing details
+- NEVER provide information that contradicts the context
+- Always indicate when you're using general knowledge vs. context information
 
-Please provide a comprehensive and helpful answer to the question. Use the provided context as your primary source, but you can supplement with your knowledge when the context is limited.
-
-Instructions:
+FORMATTING REQUIREMENTS:
 1. Format your response in clean Markdown with proper headings, bullet points, and code blocks where appropriate
-2. Prioritize information from the provided context when available
-3. If the context doesn't contain complete information, supplement with your general knowledge while clearly indicating what comes from context vs. your knowledge
-4. Include relevant details, examples, and best practices
-5. Use proper Markdown formatting:
-   - Use ## for main headings
-   - Use ### for subheadings
-   - Use bullet points (-) for lists
-   - Use `code blocks` for technical terms
-   - Use **bold** for emphasis
-   - Use > for important quotes or notes
-6. Provide practical, actionable information
+2. Use ## for main headings, ### for subheadings
+3. Use bullet points (-) for lists
+4. Use `code blocks` for technical terms
+5. Use **bold** for emphasis
+6. Use > for important quotes or notes from the context
 7. Structure your response with clear sections if the topic is complex
-8. When context is limited, explain what you know about the topic and suggest where to find more specific information
 {type_specific_instructions}
 
-Answer in Markdown format:"""
+ANSWER STRUCTURE:
+- Start with information directly from the context
+- Clearly mark any general knowledge additions with phrases like "Based on general knowledge:" or "Additionally, from standard practice:"
+- If context is insufficient, state: "The provided context doesn't contain information about [specific topic]"
+- Provide only what can be reliably derived from the context
+
+Answer in Markdown format based PRIMARILY on the provided context:"""
         
         return prompt
     
@@ -216,18 +209,25 @@ Answer in Markdown format:"""
         Returns:
             str: System prompt
         """
-        return """You are a helpful AI assistant that answers questions using both provided context and your general knowledge.
+        return """You are a context-dependent AI assistant that answers questions based PRIMARILY on provided context.
 
-Your role:
-- Prioritize information from the provided context when available
-- When context is limited or missing, use your general knowledge to provide helpful answers
-- Be transparent about what information comes from the context vs. your general knowledge
-- Provide comprehensive, practical answers that help the user
-- Structure answers clearly using proper Markdown formatting
-- Include examples, best practices, and actionable advice when relevant
-- When context is insufficient, still provide what you know about the topic and suggest reliable sources for more information
+STRICT GUIDELINES:
+- 80% of your response MUST be based on the provided context
+- Only 20% can come from general knowledge to fill minor gaps
+- You are NOT a general knowledge assistant - you are a context-based assistant
+- When context is insufficient, clearly state what's missing rather than providing general information
+- NEVER contradict or override information from the context
+- Always distinguish between context-based information and general knowledge
 
-Always format your responses in clean, readable Markdown and aim to be as helpful as possible while being clear about your information sources."""
+RESPONSE REQUIREMENTS:
+- Be transparent about information sources (context vs. general knowledge)
+- If context doesn't contain needed information, state: "The provided context doesn't include information about [topic]"
+- Provide comprehensive answers ONLY when context supports it
+- Use proper Markdown formatting for clarity
+- Focus on practical, actionable information from the context
+- When general knowledge is used, clearly mark it as such
+
+Remember: You are primarily a context interpreter, not a general knowledge provider."""
     
     def _calculate_confidence(self, search_results: List[Dict]) -> float:
         """

@@ -118,12 +118,6 @@ class Scraper:
         );
         """
     
-    def _random_delay(self, min_delay=1, max_delay=3):
-        """Add random delay between requests (deprecated - use async delays instead)."""
-        import time
-        delay = random.uniform(min_delay, max_delay)
-        time.sleep(delay)
-    
     def _get_base_url(self, url):
         """
         Extract the base URL from the given URL.
@@ -156,29 +150,42 @@ class Scraper:
         all_anchor_tags = soup.find_all('a')
 
         if not all_anchor_tags:
-            print("No anchor tags found.")
             return []
 
-        # Filter only anchor tags with href
-        anchor_tags = [tag for tag in all_anchor_tags if tag.get('href') and len(tag.get('href').split('#')) == 1 and 'css' not in tag.get('href') and 'asp' not in tag.get('href')]
-        # Remove duplicate URLs
-        anchor_tags = list(set(anchor_tags))
-
-        # All the anchor tags that have the same path but change after the # Should be merged
+        # Filter anchor tags with href, excluding non-content files
+        excluded_extensions = {'.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.pdf', '.zip', '.tar', '.gz'}
+        excluded_fragments = {'#', 'css', 'asp', 'javascript:', 'mailto:', 'tel:'}
+        
+        valid_anchors = []
+        for tag in all_anchor_tags:
+            href = tag.get('href')
+            if not href:
+                continue
+                
+            # Skip fragments and excluded patterns
+            if any(frag in href.lower() for frag in excluded_fragments):
+                continue
+                
+            # Skip file extensions
+            if any(href.lower().endswith(ext) for ext in excluded_extensions):
+                continue
+                
+            valid_anchors.append(href)
+        
+        # Remove duplicates
+        valid_anchors = list(set(valid_anchors))
 
         # Determine base domain
         if not self.base_url:
-            self.base_url = self._get_base_url(current_url)  # Use the current URL parameter
+            self.base_url = self._get_base_url(current_url)
         
-        if not self.base_url:  # If still None, return empty list
-            print("Could not determine base URL.")
+        if not self.base_url:
             return []
         
         base_domain = urlparse(self.base_url).netloc
 
         filtered_urls = []
-        for tag in anchor_tags:
-            href = tag.get('href')
+        for href in valid_anchors:
             full_url = urljoin(self.base_url, href)
             parsed_url = urlparse(full_url)
 
@@ -211,15 +218,6 @@ class Scraper:
         """
         self.current_anchor_links = 0
 
-    # Keep the original scrape method for backward compatibility
-    def scrape(self, url=None, query=None, current_depth=0):
-        """
-        Main scraping pipeline - uses async parallel scraping by default.
-        
-        Returns:
-            dict: Essential data package for vector storage with source URL tracking
-        """
-        return self.scrape_parallel(url, query)
     def get_scraping_status(self):
         """
         Get current scraping status and configuration.
@@ -265,39 +263,23 @@ class Scraper:
         Returns:
             str: The HTML content of the page, or empty string if failed.
         """
-        print(f"🔄 [ASYNC] Fetching content from: {url}")
-        
         # Strategy 1: Playwright with stealth (for JS-heavy sites)
         if use_js:
-            print(f"🎭 [ASYNC] Using Playwright with stealth mode for {url}...")
             content = await self._fetch_with_playwright_stealth_async(url)
             if content:
-                print(f"✅ [ASYNC] Playwright stealth successful for {url}")
                 return content
-            print(f"❌ [ASYNC] Playwright stealth failed for {url}, trying advanced requests...")
         
-        # Strategy 2: Advanced requests with anti-detection (async)
-        print(f"🔧 [ASYNC] Using advanced requests with anti-detection for {url}...")
+        # Strategy 2: Advanced requests with anti-detection
         content = await self._fetch_with_advanced_requests_async(url)
         if content:
-            print(f"✅ [ASYNC] Advanced requests successful for {url}")
             return content
-        print(f"❌ [ASYNC] Advanced requests failed for {url}, trying basic requests...")
         
         # Strategy 3: Basic requests (fallback)
-        print(f"🔄 [ASYNC] Using basic requests as fallback for {url}...")
-        content = await self._fetch_with_basic_requests_async(url)
-        if content:
-            print(f"✅ [ASYNC] Basic requests successful for {url}")
-            return content
-        
-        print(f"❌ [ASYNC] All strategies failed for {url}")
-        return ""
+        return await self._fetch_with_basic_requests_async(url)
 
     async def _fetch_with_playwright_stealth_async(self, url: str) -> str:
         """Async version of Playwright stealth fetching."""
         try:
-            
             async with async_playwright() as p:
                 # Use a random browser
                 browser_types = [p.chromium, p.firefox]
@@ -355,7 +337,9 @@ class Scraper:
                 return content
                 
         except Exception as e:
-            print(f"[ASYNC] Playwright error for {url}: {e}")
+            # Only log critical errors, not common timeouts
+            if "timeout" not in str(e).lower() and "connection" not in str(e).lower():
+                print(f"Playwright error: {e}")
             return ""
 
     async def _fetch_with_advanced_requests_async(self, url: str) -> str:
@@ -373,10 +357,8 @@ class Scraper:
             async with aiohttp.ClientSession(timeout=timeout, headers=headers) as session:
                 async with session.get(url, ssl=False) as response:
                     if response.status == 403:
-                        print(f"[ASYNC] 403 Forbidden - possible anti-bot protection on {url}")
                         return ""
                     elif response.status == 429:
-                        print(f"[ASYNC] 429 Too Many Requests - rate limited on {url}")
                         # Wait longer and retry once
                         await asyncio.sleep(random.uniform(5, 10))
                         async with session.get(url, ssl=False) as retry_response:
@@ -387,11 +369,9 @@ class Scraper:
                     if response.status == 200:
                         return await response.text()
                     else:
-                        print(f"[ASYNC] HTTP {response.status} for {url}")
                         return ""
                         
-        except Exception as e:
-            print(f"[ASYNC] Advanced requests error for {url}: {e}")
+        except Exception:
             return ""
 
     async def _fetch_with_basic_requests_async(self, url: str) -> str:
@@ -407,11 +387,9 @@ class Scraper:
                     if response.status == 200:
                         return await response.text()
                     else:
-                        print(f"[ASYNC] Basic requests HTTP {response.status} for {url}")
                         return ""
                         
-        except Exception as e:
-            print(f"[ASYNC] Basic requests error for {url}: {e}")
+        except Exception:
             return ""
 
     async def _scrape_single_page_async(self, url: str, query: str, current_depth: int) -> Tuple[Tuple[str, str], List[str]]:
@@ -438,7 +416,6 @@ class Scraper:
 
             # Check if content is sparse (likely JS-heavy site)
             if len(text_content) < self.sparse_content_threshold:
-                print(f"[ASYNC] Sparse content detected for {url}, trying JavaScript rendering...")
                 content_html = await self._fetch_content_async(url, use_js=True)
                 if content_html:
                     soup = bs(content_html, 'html.parser')
@@ -446,24 +423,21 @@ class Scraper:
 
             # Check content relevance
             mean_similarity, is_relevant = self.__check_content_relevance(text_content, query)
-            print(f"[ASYNC] Mean similarity for {url} is {mean_similarity:.2f} (threshold: {self.mean_similarity_threshold})")
 
-            # If content is not relevant, we still return it for root pages (current_depth == 0)
-            # but for deeper pages, we skip them to avoid wasting quota
+            # Skip irrelevant deeper pages to save quota
             if not is_relevant and current_depth > 0:
-                print(f"[ASYNC] Content at {url} is not relevant to the query '{query}'. Skipping.")
-                return ("", ""), []  # Return empty content and no anchor links
+                return ("", ""), []
             
             # Extract anchor links if we haven't reached max depth
             anchor_links = []
             if current_depth < self.max_depth:
                 anchor_links = self.__get_anchor_tags(soup, url)
 
-            # Return content with its source URL (always for root, only if relevant for deeper pages)
             return (text_content, url), anchor_links
 
         except Exception as e:
-            print(f"[ASYNC] Error scraping {url}: {e}")
+            if "timeout" not in str(e).lower():
+                print(f"Error scraping {url}: {e}")
             return ("", ""), []
 
     async def smart_scrape_async(self, url: str = None, query: str = None, current_depth: int = 0) -> List[Tuple[str, str]]:
@@ -481,32 +455,24 @@ class Scraper:
         if url is None:
             url = self.url
 
-        current, max_count, remaining = self._get_anchor_links_status()
-        print(f"[ASYNC] Starting async scrape at depth {current_depth} for: {url}")
-        print(f"[ASYNC] Anchor links so far: {current}/{max_count}")
+        current, max_count, _ = self._get_anchor_links_status()
         
         # Check if we've reached the limit before processing
         if current >= max_count:
-            print(f"[ASYNC] Reached maximum anchor links limit ({max_count}). Stopping further scraping.")
             return []
         
         # Scrape the current page
-        content_tuple, anchor_links = await self._scrape_single_page_async(url, query, current_depth)
+        content_tuple, links_to_process = await self._scrape_single_page_async(url, query, current_depth)
         
         # Start with current page content (if relevant)
         all_contents = [content_tuple] if content_tuple[0] else []
         
         # If we have anchor links and haven't reached max depth, process them with proper quota management
-        if anchor_links and current_depth < self.max_depth:
-            print(f"[ASYNC] Found {len(anchor_links)} anchor links at depth {current_depth}")
-            
+        if links_to_process and current_depth < self.max_depth:
             # Get current remaining quota
             current, max_count, remaining = self._get_anchor_links_status()
-            links_to_process = anchor_links
             
             if links_to_process:
-                print(f"[ASYNC] Processing {len(links_to_process)} out of {len(anchor_links)} links (quota remaining: {remaining})")
-                
                 # Process links in batches to avoid overwhelming the server
                 batch_size = self.config.SCRAPER_BATCH_SIZE
                 semaphore = asyncio.Semaphore(self.config.SCRAPER_SEMAPHORE_LIMIT)
@@ -515,11 +481,7 @@ class Scraper:
                     async with semaphore:
                         # Thread-safe increment with quota check
                         if not self._increment_anchor_links():
-                            print(f"[ASYNC] Quota reached, skipping {link_url}")
                             return []
-                        
-                        current, max_count, _ = self._get_anchor_links_status()
-                        print(f"[ASYNC] Processing link {current}/{max_count}: {link_url}")
                         
                         try:
                             # Add random delay
@@ -529,7 +491,6 @@ class Scraper:
                             result = await self.smart_scrape_async(link_url, query, current_depth + 1)
                             return result
                         except Exception as e:
-                            print(f"[ASYNC] Error processing {link_url}: {e}")
                             # If processing failed, decrement the counter since we didn't actually process it
                             self._decrement_anchor_links()
                             return []
@@ -539,7 +500,6 @@ class Scraper:
                     # Check quota before each batch
                     current, max_count, remaining = self._get_anchor_links_status()
                     if current >= max_count:
-                        print(f"[ASYNC] Quota reached before batch {i//batch_size + 1}, stopping.")
                         break
                     
                     batch = links_to_process[i:i + batch_size]
@@ -548,8 +508,6 @@ class Scraper:
                     
                     if not batch:  # No more links to process
                         break
-                    
-                    print(f"[ASYNC] Processing batch {i//batch_size + 1} with {len(batch)} links")
                     
                     # Create tasks for this batch
                     batch_tasks = [process_link_with_semaphore(link) for link in batch]
@@ -560,19 +518,14 @@ class Scraper:
                     # Process batch results
                     for result in batch_results:
                         if isinstance(result, Exception):
-                            print(f"[ASYNC] Batch task failed with exception: {result}")
+                            continue
                         elif isinstance(result, list):
                             all_contents.extend(result)
                     
                     # Small delay between batches to be respectful
-                    current, max_count, remaining = self._get_anchor_links_status()
+                    current, max_count, _ = self._get_anchor_links_status()
                     if i + batch_size < len(links_to_process) and current < max_count:
                         await asyncio.sleep(random.uniform(1, 2))
-                
-                current, max_count, _ = self._get_anchor_links_status()
-                print(f"[ASYNC] Completed processing at depth {current_depth}. Total links processed so far: {current}/{max_count}")
-            else:
-                print(f"[ASYNC] No remaining quota for anchor links at depth {current_depth}")
         
         return all_contents
 
@@ -594,7 +547,6 @@ class Scraper:
         self.__reset_anchor_links()
         
         max_concurrent = self.config.SCRAPER_MAX_CONCURRENT
-        print(f"🚀 Starting parallel scrape with max_concurrent={max_concurrent}")
         start_time = time.time()
         
         # Run the async scraping
@@ -635,16 +587,10 @@ class Scraper:
                 # No event loop exists, create a new one
                 results = asyncio.run(self.smart_scrape_async(url, query, 0))
             
-            end_time = time.time()
-            print(f"✅ Parallel scrape completed in {end_time - start_time:.2f} seconds")
-            print(f"📊 Scraped {len(results)} pages total")
-            
             return results
             
         except Exception as e:
-            print(f"❌ Parallel scrape failed: {e}")
-            # Return empty list instead of falling back to deprecated sync scraping
-            print("🔄 Async scraping failed, returning empty result...")
+            print(f"Error in parallel scraping: {e}")
             return []
 
     # Update the main scrape method to use parallel scraping optionally
