@@ -47,5 +47,19 @@
         "added_timestamp": "2025-07-11T13:28:23.478976"
       }
     ]
+  },
+  "f19e4826-0422-4d61-8bd8-d50cfb09e604": {
+    "query": "numeric way website",
+    "source_url": "https://www.numericway.net/",
+    "total_chunks": 30,
+    "storage_timestamp": "2025-07-11T14:54:12.162737",
+    "websites": [
+      {
+        "source_url": "https://www.numericway.net/",
+        "query": "numeric way website",
+        "chunks_added": 30,
+        "added_timestamp": "2025-07-11T14:54:12.162737"
+      }
+    ]
   }
 }

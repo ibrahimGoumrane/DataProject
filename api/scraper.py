@@ -2,94 +2,307 @@ import requests
 from bs4 import BeautifulSoup as bs
 from urllib.parse import urlparse, urljoin
 from time import sleep
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
 from dataHandler import DataHandler
 import numpy as np
 from config import RAGConfig
+import random
+import json
+from pathlib import Path
 
 class Scraper:
     def __init__(self, url=None):
         """
-        Initialize the Scraper with a URL.
+        Initialize the Enhanced Scraper with anti-detection measures.
         """
         self.config = RAGConfig()
         self.url = url
         self.base_url = self._get_base_url(url) if url else None
         self.data_handler = DataHandler()
         self.max_depth = self.config.SCRAPER_MAX_DEPTH
+        self.max_retries = self.config.SCRAPER_MAX_RETRIES
         self.sparse_content_threshold = self.config.SCRAPER_SPARSE_CONTENT_THRESHOLD
         self.mean_similarity_threshold = self.config.SCRAPER_MEAN_SIMILARITY_THRESHOLD
         self.max_anchor_links = self.config.SCRAPER_MAX_ANCHOR_LINKS
-        self.current_anchor_links = 0  # Track current anchor links to avoid exceeding max_anchor_links
-        # Headers to mimic a real browser
-        self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.5',
-            'Accept-Encoding': 'gzip, deflate',
-            'Connection': 'keep-alive',
-        }
-
-    def _fetch_content(self, url, use_js=False):
+        self.current_anchor_links = 0
+        
+        # Enhanced anti-detection measures
+        self.user_agents = [
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/121.0',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/121.0',
+            'Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/121.0',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15'
+        ]
+        
+        self.headers_pool = [
+            {
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Accept-Encoding': 'gzip, deflate',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'none',
+                'Cache-Control': 'max-age=0',
+            },
+            {
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'none',
+                'Sec-Fetch-User': '?1',
+                'Cache-Control': 'max-age=0',
+            },
+            {
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.9,fr;q=0.8',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'same-origin',
+                'DNT': '1',
+            }
+        ]
+        
+        # Initialize session with random settings
+        self.session = requests.Session()
+        self._randomize_session()
+        
+        # Stealth JavaScript for Playwright
+        self.stealth_js = """
+        // Override the navigator.webdriver property
+        Object.defineProperty(navigator, 'webdriver', {
+            get: () => false,
+        });
+        
+        // Override the navigator.plugins property
+        Object.defineProperty(navigator, 'plugins', {
+            get: () => [1, 2, 3, 4, 5],
+        });
+        
+        // Override the navigator.languages property
+        Object.defineProperty(navigator, 'languages', {
+            get: () => ['en-US', 'en'],
+        });
+        
+        // Override the screen properties
+        Object.defineProperty(screen, 'width', {
+            get: () => 1920,
+        });
+        Object.defineProperty(screen, 'height', {
+            get: () => 1080,
+        });
+        
+        // Remove automation indicators
+        window.chrome = {
+            runtime: {},
+        };
+        
+        // Mock permissions
+        const originalQuery = window.navigator.permissions.query;
+        window.navigator.permissions.query = (parameters) => (
+            parameters.name === 'notifications' ?
+                Promise.resolve({ state: Notification.permission }) :
+                originalQuery(parameters)
+        );
         """
-        Fetch the content of the given URL.
+    
+    def _randomize_session(self):
+        """Randomize session settings for better anti-detection."""
+        # Random user agent
+        user_agent = random.choice(self.user_agents)
+        headers = random.choice(self.headers_pool).copy()
+        headers['User-Agent'] = user_agent
+        
+        self.session.headers.update(headers)
+        
+        # Random timeout
+        self.session.timeout = random.uniform(10, 30)
+        
+    def _random_delay(self, min_delay=1, max_delay=3):
+        """Add random delay between requests."""
+        delay = random.uniform(min_delay, max_delay)
+        sleep(delay)
+    
+    def _enhanced_fetch_content(self, url, use_js=False):
+        """
+        Enhanced content fetching with multiple strategies and anti-detection.
+        
         Args:
             url (str): The URL to fetch.
             use_js (bool): Whether to render JavaScript or not.
-        Returns:
-            str: The HTML content of the page.
-        """
-        try:
-            if use_js:
-                return self._fetch_js_content_playwright(url)
-            else:
-                response = requests.get(url, headers=self.headers, timeout=10)
-                response.raise_for_status()
-                return response.content
-        except requests.RequestException as e:
-            print(f"Error fetching {url}: {e}")
-            self.current_anchor_links -= 1  # Decrement anchor links count
-            return ""
-
-    def _fetch_js_content_playwright(self, url):
-        """
-        Fetch content from JavaScript-heavy pages using Playwright.
-        This is much more reliable than requests-html.
-        """
         
+        Returns:
+            str: The HTML content of the page, or empty string if failed.
+        """
+        print(f"🔄 Fetching content from: {url}")
+        
+        # Strategy 1: Playwright with stealth (for JS-heavy sites)
+        if use_js:
+            print("🎭 Using Playwright with stealth mode...")
+            content = self._fetch_with_playwright_stealth(url)
+            if content:
+                print(f"✅ Playwright stealth successful for {url}")
+                return content
+            print("❌ Playwright stealth failed, trying advanced requests...")
+        
+        # Strategy 2: Advanced requests with anti-detection
+        print("🔧 Using advanced requests with anti-detection...")
+        content = self._fetch_with_advanced_requests(url)
+        if content:
+            print(f"✅ Advanced requests successful for {url}")
+            return content
+        print("❌ Advanced requests failed, trying basic requests...")
+        
+        # Strategy 3: Basic requests (fallback)
+        print("🔄 Using basic requests as fallback...")
+        content = self._fetch_with_basic_requests(url)
+        if content:
+            print(f"✅ Basic requests successful for {url}")
+            return content
+        
+        print(f"❌ All strategies failed for {url}")
+        return ""
+    
+    def _fetch_with_playwright_stealth(self, url):
+        """Fetch content using Playwright with stealth mode."""
         try:
-            print(f"Rendering JavaScript with Playwright for {url}...")
-            
             with sync_playwright() as p:
-                # Launch browser (headless by default)
-                browser = p.chromium.launch(headless=True)
-                context = browser.new_context(
-                    user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                # Use a random browser
+                browser_type = random.choice([p.chromium, p.firefox])
+                browser = browser_type.launch(
+                    headless=True,
+                    args=[
+                        '--no-sandbox',
+                        '--disable-setuid-sandbox',
+                        '--disable-dev-shm-usage',
+                        '--disable-accelerated-2d-canvas',
+                        '--disable-gpu',
+                        '--window-size=1920,1080',
+                        '--disable-web-security',
+                        '--disable-features=VizDisplayCompositor'
+                    ]
                 )
+                
+                # Create context with random user agent
+                context = browser.new_context(
+                    user_agent=random.choice(self.user_agents),
+                    viewport={'width': 1920, 'height': 1080},
+                    ignore_https_errors=True,
+                    java_script_enabled=True
+                )
+                
+                # Add stealth scripts
+                context.add_init_script(self.stealth_js)
+                
                 page = context.new_page()
                 
-                # Navigate to the page
+                # Random delay before navigation
+                self._random_delay(1, 3)
+                
+                # Navigate with timeout
                 page.goto(url, wait_until='networkidle', timeout=30000)
                 
                 # Wait for content to load
                 page.wait_for_selector("body", timeout=10000)
                 
-                # Scroll down to trigger lazy loading
+                # Simulate human behavior
+                page.mouse.move(random.randint(100, 800), random.randint(100, 600))
+                page.wait_for_timeout(random.randint(1000, 3000))
+                
+                # Scroll to trigger lazy loading
                 for i in range(3):
                     page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                    page.wait_for_timeout(1000)
+                    page.wait_for_timeout(random.randint(1000, 2000))
                 
-                # Get the final HTML
-                html_content = page.content()
-                
+                # Get final content
+                content = page.content()
                 browser.close()
-                return html_content
                 
+                return content
+                
+        except PlaywrightTimeoutError:
+            print(f"Playwright timeout for {url}")
+            return ""
         except Exception as e:
-            print(f"Error rendering JavaScript with Playwright for {url}: {e}")
-            print("Falling back to regular requests...")
-            return self._fetch_content(url, use_js=False)
+            print(f"Playwright error for {url}: {e}")
+            return ""
+    
+    def _fetch_with_advanced_requests(self, url):
+        """Fetch content using advanced requests with anti-detection."""
+        try:
+            # Randomize session settings
+            self._randomize_session()
+            
+            # Add random delay
+            self._random_delay(1, 2)
+            
+            # Make request with timeout
+            response = self.session.get(url, timeout=30)
+            
+            # Check for common anti-bot responses
+            if response.status_code == 403:
+                print(f"403 Forbidden - possible anti-bot protection on {url}")
+                return ""
+            elif response.status_code == 429:
+                print(f"429 Too Many Requests - rate limited on {url}")
+                # Wait longer and retry once
+                self._random_delay(5, 10)
+                response = self.session.get(url, timeout=30)
+            
+            if response.status_code == 200:
+                return response.text
+            else:
+                print(f"HTTP {response.status_code} for {url}")
+                return ""
+                
+        except requests.exceptions.RequestException as e:
+            print(f"Advanced requests error for {url}: {e}")
+            return ""
+    
+    def _fetch_with_basic_requests(self, url):
+        """Basic requests fallback."""
+        try:
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            }
+            
+            response = requests.get(url, headers=headers, timeout=15)
+            
+            if response.status_code == 200:
+                return response.text
+            else:
+                print(f"Basic requests HTTP {response.status_code} for {url}")
+                return ""
+                
+        except requests.exceptions.RequestException as e:
+            print(f"Basic requests error for {url}: {e}")
+            return ""
+
+    def _fetch_content(self, url, use_js=False):
+        """
+        Fetch the content of the given URL using enhanced anti-detection methods.
+        Args:
+            url (str): The URL to fetch.
+            use_js (bool): Whether to render JavaScript or not.
         
+        Returns:
+            str: The HTML content of the page, or empty string if failed.
+        """
+        return self._enhanced_fetch_content(url, use_js)
+
     def __get_anchor_tags(self, soup: bs, current_url: str):
         """
         Extract and resolve all internal anchor tag URLs from the given BeautifulSoup object.
@@ -193,13 +406,9 @@ class Scraper:
         # Check content relevance to the query
         mean_similarity, is_relevant = self.__check_content_relevance(text_content, query)
         print(f"Mean similarity for {url} is {mean_similarity:.2f} (threshold: {self.mean_similarity_threshold})")
-        if not is_relevant:
-            self.current_anchor_links -= 1  # Decrement anchor links count
-            print(f"Content at {url} is not relevant to the query '{query}'. Skipping.")
-            return [] if not is_root else [text_content]
         # If depth exceeded, just return this page's text
         if current_depth >= self.max_depth:
-                return [text_content]
+                return [text_content] if is_relevant else []
         # Extract internal anchor tags
         anchor_tags = self.__get_anchor_tags(soup, url)
         if not anchor_tags:
@@ -214,7 +423,8 @@ class Scraper:
                 print(f"Reached maximum anchor links limit ({self.max_anchor_links}). Stopping further scraping.")
                 break
             self.current_anchor_links += 1
-            sleep(0.5)  # Slightly longer delay for JS rendering
+            # Add enhanced delay with randomization
+            self._random_delay(0.5, 1.5)
             child_content = self.smart_scrape(url=anchor, query=query, current_depth=current_depth + 1)
             if child_content:
                 contents.extend(child_content)
@@ -238,25 +448,6 @@ class Scraper:
         similarities = self.data_handler.compute_similarity(text_content, query)
         mean_similarity = np.mean([sim[1] for sim in similarities]) if similarities else 0.0
         return mean_similarity , mean_similarity >= self.mean_similarity_threshold
-    def scrape_js_heavy(self, url=None):
-        """
-        Scrape a JavaScript-heavy page using Playwright.
-        This method specifically handles sites that rely on JavaScript for content rendering.
-        
-        Args:
-            url (str): URL to scrape. If None, uses self.url.
-            
-        Returns:
-            str: The content of the scraped page after JavaScript execution.
-        """
-        if url is None:
-            url = self.url
-            
-        content_html = self._fetch_js_content_playwright(url)
-        if content_html:
-            soup = bs(content_html, 'html.parser')
-            return soup.get_text()
-        return ""
 
     def __reset_anchor_links(self):
         """
@@ -316,4 +507,78 @@ class Scraper:
         
         print(f"✅ Scrape complete: {len(all_processed_chunks)} chunks ready for storage")
         return scrape_result
+
+    def get_scraping_status(self):
+        """
+        Get current scraping status and configuration.
+        
+        Returns:
+            dict: Status information including anti-detection measures.
+        """
+        return {
+            'current_anchor_links': self.current_anchor_links,
+            'max_anchor_links': self.max_anchor_links,
+            'max_depth': self.max_depth,
+            'sparse_content_threshold': self.sparse_content_threshold,
+            'mean_similarity_threshold': self.mean_similarity_threshold,
+            'anti_detection_enabled': True,
+            'user_agents_available': len(self.user_agents),
+            'header_pools_available': len(self.headers_pool),
+            'stealth_mode_enabled': True,
+            'random_delays_enabled': True,
+            'multi_strategy_enabled': True
+        }
     
+    def reset_scraping_session(self):
+        """
+        Reset scraping session and reinitialize anti-detection measures.
+        """
+        self.__reset_anchor_links()
+        self._randomize_session()
+        print("🔄 Scraping session reset with new anti-detection settings")
+    
+    # Enhanced scraping method with comprehensive error handling
+    def enhanced_scrape(self, url=None, query=None):
+        """
+        Enhanced scraping method with retry logic and comprehensive error handling.
+        
+        Args:
+            url (str): URL to scrape.
+            query (str): Query for relevance checking.
+            max_retries (int): Maximum number of retry attempts.
+            
+        Returns:
+            dict: Scraping results or None if failed.
+        """
+        if url is None:
+            url = self.url
+
+        for attempt in range(self.max_retries):
+            try:
+                print(f"🚀 Enhanced scrape attempt {attempt + 1}/{self.max_retries} for: {url}")
+
+                # Reset session for each retry
+                if attempt > 0:
+                    self._randomize_session()
+                    print(f"🔄 Retry {attempt + 1}: Using new anti-detection settings")
+                
+                # Perform the scrape
+                result = self.scrape(url, query)
+                
+                if result and result.get('total_chunks', 0) > 0:
+                    print(f"✅ Enhanced scrape successful on attempt {attempt + 1}")
+                    return result
+                else:
+                    print(f"⚠️ Attempt {attempt + 1} returned no valid chunks")
+                    
+            except Exception as e:
+                print(f"❌ Enhanced scrape attempt {attempt + 1} failed: {e}")
+                
+                if attempt < self.max_retries - 1:
+                    # Wait progressively longer between retries
+                    self._random_delay(2 * (attempt + 1), 4 * (attempt + 1))
+                else:
+                    print(f"❌ All {self.max_retries} attempts failed for {url}")
+                    
+        return None
+

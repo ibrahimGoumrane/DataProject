@@ -4,7 +4,7 @@ Handles all language model interactions including prompt engineering and respons
 """
 
 from typing import Dict, List, Optional
-from config import get_config
+from config import RAGConfig
 from openai import OpenAI
 
 
@@ -22,7 +22,7 @@ class LLM:
         Args:
             api_key (str, optional): OpenAI API key. If not provided, uses config.
         """
-        self.config = get_config()
+        self.config = RAGConfig()
         
         # Initialize OpenAI client
         self.openai_client = OpenAI(api_key=api_key or self.config.OPENAI_API_KEY)

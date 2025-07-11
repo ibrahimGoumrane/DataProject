@@ -4,16 +4,17 @@ and multi-website processing for broader context
 """
 
 from rag_pipeline import RAGPipeline
-from config import get_config
+from config import RAGConfig
 from result_formatter import ResultFormatter
 
-
+# Initialize the necessary components
+pipeline = RAGPipeline()
+config = RAGConfig()
+formatter = ResultFormatter(output_dir="results")
 def run_interactive_cli(existing_session_id=None):
     """Run an interactive CLI for the RAG pipeline with direct website input."""
     # Initialize components
-    config = get_config()
-    formatter = ResultFormatter(output_dir="results")
-    pipeline = RAGPipeline()
+
     
     print("\n🤖 ENHANCED RAG PIPELINE - INTERACTIVE MODE")
     print("===========================================")
@@ -202,8 +203,7 @@ if __name__ == "__main__":
         session_id = input("\nEnter the session ID to resume: ")
         if session_id.strip():
             print(f"\nResuming session: {session_id}")
-            # Initialize the necessary components
-            pipeline = RAGPipeline()
+
             
             # Check if session exists
             session_info = pipeline.storage_manager.vector_store.get_session_info(session_id)

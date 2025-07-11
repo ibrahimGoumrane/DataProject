@@ -37,7 +37,8 @@ class RAGConfig:
         self.SCRAPER_MAX_DEPTH = self._get_int('SCRAPER_MAX_DEPTH', 4)
         self.SCRAPER_MAX_ANCHOR_LINKS = self._get_int('SCRAPER_MAX_ANCHOR_LINKS', 10)
         self.SCRAPER_SPARSE_CONTENT_THRESHOLD = self._get_int('SCRAPER_SPARSE_CONTENT_THRESHOLD', 750)
-        self.SCRAPER_MEAN_SIMILARITY_THRESHOLD = self._get_float('SCRAPER_MEAN_SIMILARITY_THRESHOLD', 0.3)
+        self.SCRAPER_MEAN_SIMILARITY_THRESHOLD = self._get_float('SCRAPER_MEAN_SIMILARITY_THRESHOLD', 0.5)
+        self.SCRAPER_MAX_RETRIES = self._get_int('SCRAPER_MAX_RETRIES', 3)
         # Storage Settings
         self.STORAGE_DIR = os.getenv('STORAGE_DIR', 'storage')
         # Degrading Factor for Chunks without the same url
@@ -132,35 +133,3 @@ class RAGConfig:
 
 # Global configuration instance
 config = RAGConfig()
-
-def load_env_file(env_path: str = '.env') -> bool:
-    """
-    Load environment variables from a .env file.
-    
-    Args:
-        env_path (str): Path to the .env file
-        
-    Returns:
-        bool: True if file was loaded successfully
-    """
-    try:
-        if os.path.exists(env_path):
-            with open(env_path, 'r') as f:
-                for line in f:
-                    line = line.strip()
-                    if line and not line.startswith('#') and '=' in line:
-                        key, value = line.split('=', 1)
-                        os.environ[key.strip()] = value.strip()
-            return True
-    except Exception as e:
-        print(f"Warning: Could not load .env file: {e}")
-    return False
-
-def get_config() -> RAGConfig:
-    """
-    Get the global configuration instance.
-    
-    Returns:
-        RAGConfig: Configuration instance
-    """
-    return config

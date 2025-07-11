@@ -8,13 +8,13 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 from html2text import HTML2Text
 import numpy as np
-from config import get_config
-from typing import List, Tuple
+from config import RAGConfig
+from typing import List
 class DataHandler:
     PATH="data"
     def __init__(self):
         self.saved_path = self.PATH
-        self.config = get_config()
+        self.config = RAGConfig()
         self._initialize_data()
     def _initialize_data(self):
         """

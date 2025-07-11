@@ -3,7 +3,7 @@ import os
 from scraper import Scraper
 from dataHandler import DataHandler
 from storage_manager import StorageManager
-from config import get_config, load_env_file
+from config import RAGConfig
 from llm import LLM
 from rag_enhancer import RAGEnhancer
 from typing import Dict, List, Optional
@@ -17,8 +17,7 @@ class RAGPipeline:
     def __init__(self, storage_dir=None, openai_api_key=None, config_file='.env'):
         """Initialize the RAG pipeline."""
         # Load configuration from .env file if it exists
-        load_env_file(config_file)
-        self.config = get_config()
+        self.config = RAGConfig()
         
         # Validate configuration
         validation = self.config.validate()
@@ -63,7 +62,7 @@ class RAGPipeline:
         print(f"📝 Query: {query}")
         
         # 1. Scrape the website
-        scrape_result = self.scraper.scrape(url=url, query=query)
+        scrape_result = self.scraper.enhanced_scrape(url=url, query=query)
         
         if not scrape_result:
             return {"error": "Failed to scrape website", "success": False}
