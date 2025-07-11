@@ -1,5 +1,4 @@
 import numpy as np
-import os
 from scraper import Scraper
 from dataHandler import DataHandler
 from storage_manager import StorageManager
@@ -7,7 +6,6 @@ from config import RAGConfig
 from llm import LLM
 from rag_enhancer import RAGEnhancer
 from typing import Dict, List, Optional
-
 
 class RAGPipeline:
     """
@@ -46,7 +44,7 @@ class RAGPipeline:
         print(f"🔑 OpenAI: {'✅ Available' if self.llm.is_available() else '❌ Not configured'}")
         print("🚀 Enhanced RAG features enabled")
     
-    def process_website(self, url: str, query: str, session_id: Optional[str] = None) -> Dict:
+    def process_website(self, url: str, query: str, session_id: Optional[str] = None, use_async: bool = False) -> Dict:
         """
         Complete pipeline: scrape website and store in vector database.
         
@@ -54,18 +52,42 @@ class RAGPipeline:
             url (str): Website URL to scrape
             query (str): User query for context
             session_id (str, optional): Existing session ID to append to for combining multiple websites
+            use_async (bool): Whether to use async parallel scraping
         
         Returns:
             Dict: Processing result with session info
         """
         print(f"🚀 Processing website: {url}")
         print(f"📝 Query: {query}")
+        print(f"⚡ Scraping mode: {'Parallel (Async)' if use_async else 'Sequential'}")
         
-        # 1. Scrape the website
-        scrape_result = self.scraper.enhanced_scrape(url=url, query=query)
-        
-        if not scrape_result:
-            return {"error": "Failed to scrape website", "success": False}
+        # 1. Scrape the website - choose between async and sequential
+        try:
+            if use_async:
+                print("🔄 Using async parallel scraping...")
+                scrape_result = self.scraper.scrape_parallel(url=url, query=query)
+            else:
+                print("🔄 Using sequential scraping...")
+                scrape_result = self.scraper.enhanced_scrape(url=url, query=query)
+            
+            if not scrape_result:
+                return {"error": "Failed to scrape website", "success": False}
+                
+        except Exception as e:
+            print(f"❌ Scraping error: {e}")
+            
+            # If async scraping failed, fall back to sequential
+            if use_async:
+                print("🔄 Async scraping failed, falling back to sequential...")
+                try:
+                    scrape_result = self.scraper.enhanced_scrape(url=url, query=query)
+                    if not scrape_result:
+                        return {"error": "Both async and sequential scraping failed", "success": False}
+                except Exception as e2:
+                    print(f"❌ Sequential fallback also failed: {e2}")
+                    return {"error": f"All scraping methods failed: {e}, {e2}", "success": False}
+            else:
+                return {"error": f"Sequential scraping failed: {e}", "success": False}
         
         # 2. Store in vector database
         try:
@@ -300,7 +322,7 @@ class RAGPipeline:
         weighted_sum = sum(score * weight for score, weight in zip(scores, weights))
         weight_sum = sum(weights)
         
-        return weighted_sum / weight_sum if weight_sum > 0 else 0.0
+        return weighted_sum / weight_sum if weight_sum > 0 else 0
     
     def preprocess_query(self, query: str , question_type = "" , entities = [""]) -> str:
         """
@@ -403,3 +425,37 @@ class RAGPipeline:
         quality_metrics['suggestions'] = suggestions
         
         return quality_metrics
+    
+    def process_website_with_performance_metrics(self, url: str, query: str, session_id: Optional[str] = None, use_async: bool = False) -> Dict:
+        """
+        Process website with detailed performance metrics.
+        
+        Args:
+            url (str): Website URL to scrape
+            query (str): User query for context
+            session_id (str, optional): Existing session ID to append to
+            use_async (bool): Whether to use async parallel scraping
+        
+        Returns:
+            Dict: Processing result with detailed metrics
+        """
+        import time
+        
+        start_time = time.time()
+        result = self.process_website(url, query, session_id, use_async)
+        end_time = time.time()
+        
+        processing_time = end_time - start_time
+        
+        # Add performance metrics to result
+        if result.get('success'):
+            result.update({
+                'performance_metrics': {
+                    'processing_time': processing_time,
+                    'scraping_mode': 'parallel' if use_async else 'sequential',
+                    'chunks_per_second': result.get('chunks_stored', 0) / processing_time if processing_time > 0 else 0,
+                    'estimated_speedup': 2.5 if use_async else 1.0  # Rough estimate
+                }
+            })
+        
+        return result

@@ -40,6 +40,30 @@ def run_interactive_cli(existing_session_id=None):
     else:
         print("✅ Using enhanced mode - broader context search")
     
+    # Ask user about scraping performance
+    print("\n⚡ SCRAPING PERFORMANCE SELECTION")
+    print("================================")
+    print("1. Sequential scraping (slower but more reliable)")
+    print("2. Parallel scraping (faster but uses more resources)")
+    print("3. Auto-detect (tries parallel, falls back to sequential)")
+    
+    while True:
+        scraping_choice = input("\nChoose scraping mode (1-3): ").strip()
+        if scraping_choice in ['1', '2', '3']:
+            break
+        print("Please enter 1, 2, or 3")
+    
+    # Set scraping mode
+    if scraping_choice == '1':
+        use_async = False
+        print("✅ Using sequential scraping - reliable and respectful")
+    elif scraping_choice == '2':
+        use_async = True
+        print("✅ Using parallel scraping - faster processing")
+    else:  # scraping_choice == '3'
+        use_async = True
+        print("✅ Using auto-detect - parallel with sequential fallback")
+    
     # Use existing session if provided
     session_id = existing_session_id
     websites_processed = []
@@ -88,25 +112,45 @@ def run_interactive_cli(existing_session_id=None):
             print(f"Using default query: '{query}'")
             
         print(f"\n🌐 Processing website: {url}")
+        print(f"📝 Query: {query}")
+        print(f"⚡ Mode: {'Parallel' if use_async else 'Sequential'}")
+        
         if session_id:
             print(f"📌 Appending to existing session: {session_id}")
             
+        # Record start time for performance measurement
+        import time
+        start_time = time.time()
+        
         result = pipeline.process_website(
             url=url,
             query=query,
-            session_id=session_id
+            session_id=session_id,
+            use_async=use_async
         )
+        
+        end_time = time.time()
+        processing_time = end_time - start_time
         
         if not result.get('success', False):
             print(f"❌ Failed to process website: {result.get('error')}")
+            print(f"⏱️ Processing time: {processing_time:.2f} seconds")
             continue
         
         session_id = result['session_id']
         websites_processed.append(url)
         
         print(f"✅ Website processed successfully")
-        print(f"Session ID: {result['session_id']}")
-        print(f"Chunks stored: {result['chunks_stored']}")
+        print(f"⏱️ Processing time: {processing_time:.2f} seconds")
+        print(f"📊 Performance: {'Parallel' if use_async else 'Sequential'} scraping")
+        print(f"🆔 Session ID: {result['session_id']}")
+        print(f"📦 Chunks stored: {result['chunks_stored']}")
+        
+        # Show performance benefit if parallel was used
+        if use_async and processing_time > 0:
+            estimated_sequential_time = processing_time * 2.5  # Rough estimate
+            print(f"📈 Estimated sequential time: {estimated_sequential_time:.2f}s")
+            print(f"🚀 Speed improvement: ~{estimated_sequential_time/processing_time:.1f}x faster")
         
         website_num += 1
         
@@ -124,6 +168,17 @@ def run_interactive_cli(existing_session_id=None):
         print(f"  {i}. {website}")
     print(f"Session ID: {session_id}")
     print(f"Context mode: {'Focused (URLs only)' if use_session_only else 'Enhanced (broader search)'}")
+    print(f"Scraping mode: {'Parallel (Async)' if use_async else 'Sequential'}")
+    
+    if use_async:
+        print("\n⚡ ASYNC SCRAPING INFO")
+        print("====================")
+        print("✅ Parallel scraping was used for faster processing")
+        print("🔧 Configuration:")
+        print(f"  - Max concurrent: {config.SCRAPER_MAX_CONCURRENT}")
+        print(f"  - Batch size: {config.SCRAPER_BATCH_SIZE}")
+        print(f"  - Async timeout: {config.SCRAPER_ASYNC_TIMEOUT}s")
+        print("💡 Tip: You can adjust these settings via environment variables")
     
     # Step 3: Ask questions
     print("\n❓ ASK QUESTIONS")

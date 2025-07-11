@@ -37,8 +37,15 @@ class RAGConfig:
         self.SCRAPER_MAX_DEPTH = self._get_int('SCRAPER_MAX_DEPTH', 4)
         self.SCRAPER_MAX_ANCHOR_LINKS = self._get_int('SCRAPER_MAX_ANCHOR_LINKS', 10)
         self.SCRAPER_SPARSE_CONTENT_THRESHOLD = self._get_int('SCRAPER_SPARSE_CONTENT_THRESHOLD', 750)
-        self.SCRAPER_MEAN_SIMILARITY_THRESHOLD = self._get_float('SCRAPER_MEAN_SIMILARITY_THRESHOLD', 0.5)
+        self.SCRAPER_MEAN_SIMILARITY_THRESHOLD = self._get_float('SCRAPER_MEAN_SIMILARITY_THRESHOLD', 0.45)
         self.SCRAPER_MAX_RETRIES = self._get_int('SCRAPER_MAX_RETRIES', 3)
+        
+        # Async Scraper Settings
+        self.SCRAPER_MAX_CONCURRENT = self._get_int('SCRAPER_MAX_CONCURRENT', 10)
+        self.SCRAPER_BATCH_SIZE = self._get_int('SCRAPER_BATCH_SIZE', 5)
+        self.SCRAPER_ASYNC_TIMEOUT = self._get_int('SCRAPER_ASYNC_TIMEOUT', 30)
+        self.SCRAPER_SEMAPHORE_LIMIT = self._get_int('SCRAPER_SEMAPHORE_LIMIT', 15)
+        
         # Storage Settings
         self.STORAGE_DIR = os.getenv('STORAGE_DIR', 'storage')
         # Degrading Factor for Chunks without the same url
@@ -119,12 +126,15 @@ class RAGConfig:
                 "max_context_length": self.DATA_MAX_CONTEXT_LENGTH
             },
             "scraper": {
-                "max_pages": self.SCRAPER_MAX_PAGES,
                 "timeout": self.SCRAPER_TIMEOUT,
                 "max_depth": self.SCRAPER_MAX_DEPTH,
-                "max_anchor_links": self.MAX_ANCHOR_LINKS,
+                "max_anchor_links": self.SCRAPER_MAX_ANCHOR_LINKS,
                 "sparse_content_threshold": self.SCRAPER_SPARSE_CONTENT_THRESHOLD,
-                "mean_similarity_threshold": self.SCRAPER_MEAN_SIMILARITY_THRESHOLD
+                "mean_similarity_threshold": self.SCRAPER_MEAN_SIMILARITY_THRESHOLD,
+                "max_concurrent": self.SCRAPER_MAX_CONCURRENT,
+                "batch_size": self.SCRAPER_BATCH_SIZE,
+                "async_timeout": self.SCRAPER_ASYNC_TIMEOUT,
+                "semaphore_limit": self.SCRAPER_SEMAPHORE_LIMIT
             },
             "storage": {
                 "directory": self.STORAGE_DIR

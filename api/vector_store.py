@@ -79,7 +79,8 @@ class VectorStore:
         """
         if not scrape_result or not scrape_result.get('processed_chunks'):
             raise ValueError("Invalid scrape result provided")
-        
+        if not scrape_result.get("chunk_sources"):
+            scrape_result['chunk_sources'] = [scrape_result['source_url']] * len(scrape_result['processed_chunks'])
         # Generate a new session_id if not provided
         is_new_session = session_id is None
         if not session_id:
@@ -100,12 +101,12 @@ class VectorStore:
         self.index.add(embeddings.astype('float32'))
         
         # Store chunks with minimal metadata
-        for i, chunk in enumerate(scrape_result['processed_chunks']):
+        for i, (chunk, source_url) in enumerate(zip(scrape_result['processed_chunks'], scrape_result['chunk_sources'])):
             # Create simple metadata
             metadata = {
                 'session_id': session_id,
                 'vector_index': start_idx + i,
-                'source_url': scrape_result['source_url'],
+                'source_url': source_url,
                 'query': scrape_result['query'],
                 'storage_timestamp': datetime.now().isoformat()
             }

@@ -22,3 +22,13 @@ sentence-transformers>=2.2.0
 
 # Enhanced formatting support
 markdown>=3.4.0
+
+# Async Scraping Requirements
+aiohttp>=3.8.0
+
+# Async Playwright (optional, for JS-heavy sites)
+playwright>=1.40.0
+
+# Additional async utilities
+asyncio-throttle>=1.0.0  # For rate limiting
+aiofiles>=23.0.0  # For async file operations
