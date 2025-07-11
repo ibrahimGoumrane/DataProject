@@ -186,13 +186,13 @@ RELEVANT CONTEXT:
 
 {sources_text}
 
-Please provide a comprehensive and accurate answer to the question based on the context provided. 
+Please provide a comprehensive and helpful answer to the question. Use the provided context as your primary source, but you can supplement with your knowledge when the context is limited.
 
 Instructions:
 1. Format your response in clean Markdown with proper headings, bullet points, and code blocks where appropriate
-2. Answer directly and concisely using only the information from the provided context
-3. If the context doesn't contain enough information, say so clearly
-4. Include relevant details and examples when available
+2. Prioritize information from the provided context when available
+3. If the context doesn't contain complete information, supplement with your general knowledge while clearly indicating what comes from context vs. your knowledge
+4. Include relevant details, examples, and best practices
 5. Use proper Markdown formatting:
    - Use ## for main headings
    - Use ### for subheadings
@@ -200,10 +200,9 @@ Instructions:
    - Use `code blocks` for technical terms
    - Use **bold** for emphasis
    - Use > for important quotes or notes
-6. Don't make up information that's not in the context
+6. Provide practical, actionable information
 7. Structure your response with clear sections if the topic is complex
-8. Always give more priority to the provided context over general knowledge
-9. Always choose the most relevant and recent information from the context
+8. When context is limited, explain what you know about the topic and suggest where to find more specific information
 {type_specific_instructions}
 
 Answer in Markdown format:"""
@@ -217,18 +216,18 @@ Answer in Markdown format:"""
         Returns:
             str: System prompt
         """
-        return """You are a helpful AI assistant that answers questions based on provided context from web content. 
+        return """You are a helpful AI assistant that answers questions using both provided context and your general knowledge.
 
 Your role:
-- Answer questions accurately using only the provided context
-- Be concise but comprehensive
-- Acknowledge when information is insufficient
+- Prioritize information from the provided context when available
+- When context is limited or missing, use your general knowledge to provide helpful answers
+- Be transparent about what information comes from the context vs. your general knowledge
+- Provide comprehensive, practical answers that help the user
 - Structure answers clearly using proper Markdown formatting
-- Use headings, bullet points, code blocks, and emphasis appropriately
-- Don't hallucinate or add information not in the context
-- If asked about something not in the context, politely explain the limitation
+- Include examples, best practices, and actionable advice when relevant
+- When context is insufficient, still provide what you know about the topic and suggest reliable sources for more information
 
-Always format your responses in clean, readable Markdown and base your answers on the provided context while citing limitations when appropriate."""
+Always format your responses in clean, readable Markdown and aim to be as helpful as possible while being clear about your information sources."""
     
     def _calculate_confidence(self, search_results: List[Dict]) -> float:
         """
