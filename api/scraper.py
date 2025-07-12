@@ -246,7 +246,7 @@ class Scraper:
         Reset scraping session for async operations.
         """
         self.__reset_anchor_links()
-        print("🔄 Async scraping session reset")
+        print("[RESET] Async scraping session reset")
     
     # ============================================================================
     # ASYNC SCRAPING METHODS - Parallel Processing for Better Performance
@@ -605,13 +605,13 @@ class Scraper:
         Returns:
             dict: Essential data package for vector storage
         """
-        print(f"🚀 Starting parallel scrape for query: '{query}' on URL: {url}")
+        print(f"[START] Starting parallel scrape for query: '{query}' on URL: {url}")
         
         # 1. Scrape the content in parallel
         raw_content_list = self.smart_scrape_parallel(url, query)
         
         if not raw_content_list:
-            print("❌ No content scraped")
+            print("[ERROR] No content scraped")
             return None
         
         # 2. Process query
@@ -622,7 +622,7 @@ class Scraper:
         all_chunk_embeddings = []
         all_chunk_sources = []  # Track source URLs for each chunk
         
-        print(f"📄 Processing {len(raw_content_list)} scraped pages...")
+        print(f"[PROCESS] Processing {len(raw_content_list)} scraped pages...")
         
         for content_tuple in raw_content_list:
             if isinstance(content_tuple, tuple) and len(content_tuple) == 2:
@@ -638,7 +638,7 @@ class Scraper:
                         all_chunk_sources.extend([source_url] * len(processed_chunks))
         
         if not all_processed_chunks:
-            print("❌ No valid chunks after processing")
+            print("[ERROR] No valid chunks after processing")
             return None
         
         # 4. Return only essential data
@@ -652,7 +652,7 @@ class Scraper:
             'total_chunks': len(all_processed_chunks)
         }
         
-        print(f"✅ Parallel scrape complete: {len(all_processed_chunks)} chunks ready for storage")
+        print(f"[SUCCESS] Parallel scrape complete: {len(all_processed_chunks)} chunks ready for storage")
         return scrape_result
 
     def _increment_anchor_links(self) -> bool:

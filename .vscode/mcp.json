@@ -1,0 +1,16 @@
+{
+  "inputs": [
+    {
+      "id": "mcp_server_url",
+      "type": "promptString",
+      "description": "MCP Server used to fetch data from the url and search context based on it"
+    }
+  ],
+  "servers": {
+    "urlContextHelper": {
+      "command": "C:\\Users\\ibrahim\\Desktop\\DataProject\\venv\\Scripts\\python.exe",
+      "args": ["api\\server.py"],
+      "cwd": "C:\\Users\\ibrahim\\Desktop\\DataProject"
+    }
+  }
+}

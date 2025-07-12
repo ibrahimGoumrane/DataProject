@@ -307,26 +307,26 @@ class ResultFormatter:
 <body>
     <div class="container">
         <div class="header">
-            <h1>🤖 RAG Pipeline Result</h1>
+            <h1>RAG Pipeline Result</h1>
             <p class="timestamp">Generated: {timestamp}</p>
         </div>
 
         <div class="section">
-            <h2>❓ Query</h2>
+            <h2>Query</h2>
             <div class="query-box">
                 {result.get('query', 'N/A')}
             </div>
         </div>
 
         <div class="section">
-            <h2>💡 Answer</h2>
+            <h2>Answer</h2>
             <div class="answer-box">
                 {answer_html}
             </div>
         </div>
 
         <div class="section">
-            <h2>📊 Metadata</h2>
+            <h2>Metadata</h2>
             <div class="metadata">
                 <div class="metadata-grid">
                     <div class="metadata-item">
@@ -348,7 +348,7 @@ class ResultFormatter:
                         <strong>Context Used:</strong> {result.get('context_used', 'N/A')} chars
                     </div>
                     <div class="metadata-item">
-                        <strong>Enhancement:</strong> {'✅ Applied' if result.get('enhancement_applied') else '❌ Not Applied'}
+                        <strong>Enhancement:</strong> {'Applied' if result.get('enhancement_applied') else 'Not Applied'}
                     </div>
                 </div>
             </div>
@@ -360,7 +360,7 @@ class ResultFormatter:
         if query_analysis:
             html_content += """
         <div class="section">
-            <h2>🔍 Query Analysis</h2>
+            <h2>Query Analysis</h2>
             <div class="metadata">
                 <div class="metadata-grid">
 """
@@ -406,7 +406,7 @@ class ResultFormatter:
         if answer_quality:
             html_content += """
         <div class="section">
-            <h2>📈 Answer Quality</h2>
+            <h2>Answer Quality</h2>
             <div class="metadata">
                 <div class="metadata-grid">
 """
@@ -454,7 +454,7 @@ class ResultFormatter:
         if search_results:
             html_content += """
         <div class="section">
-            <h2>🔍 Search Results</h2>
+            <h2>Search Results</h2>
 """
             for i, search_result in enumerate(search_results[:3], 1):  # Top 3
                 score = search_result.get('similarity_score', 0)
@@ -472,7 +472,7 @@ class ResultFormatter:
             context = result.get('context', '')[:1000]
             html_content += f"""
         <div class="section">
-            <h2>📄 Retrieved Context</h2>
+            <h2>Retrieved Context</h2>
             <pre>{context}...</pre>
         </div>
 """
@@ -490,7 +490,7 @@ class ResultFormatter:
                 
             html_content += f"""
         <div class="section">
-            <h2>📄 Full Context Provided to LLM</h2>
+            <h2>Full Context Provided to LLM</h2>
             <div style="background: #f8f8f8; border: 1px solid #ddd; border-radius: 5px; padding: 15px; margin-top: 10px; overflow: auto; max-height: 500px;">
                 <pre style="margin: 0;">{display_context}</pre>
             </div>

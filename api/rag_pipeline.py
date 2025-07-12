@@ -9,7 +9,7 @@ from typing import Dict, List, Optional
 
 class RAGPipeline:
     """
-    Complete RAG pipeline: Scrape → Store → Retrieve → Generate
+    Complete RAG pipeline: Scrape -> Store -> Retrieve -> Generate
     """
     
     def __init__(self, storage_dir=None, openai_api_key=None, config_file='.env'):
@@ -20,13 +20,13 @@ class RAGPipeline:
         # Validate configuration
         validation = self.config.validate()
         if not validation['valid']:
-            print("❌ Configuration errors:")
+            print("[ERROR] Configuration errors:")
             for error in validation['errors']:
                 print(f"  - {error}")
             raise ValueError("Invalid configuration")
         
         if validation['warnings']:
-            print("⚠️ Configuration warnings:")
+            print("[WARNING] Configuration warnings:")
             for warning in validation['warnings']:
                 print(f"  - {warning}")
         
@@ -39,12 +39,12 @@ class RAGPipeline:
         self.llm = LLM(openai_api_key)
         self.enhancer = RAGEnhancer()
         
-        print("🤖 RAG Pipeline initialized")
-        print(f"📊 Configuration: max_context={self.config.MAX_CONTEXT_LENGTH}, model={self.config.MODEL_NAME}")
-        print(f"🔑 OpenAI: {'✅ Available' if self.llm.is_available() else '❌ Not configured'}")
-        print("🚀 Enhanced RAG features enabled")
+        print("[RAG] RAG Pipeline initialized")
+        print(f"[CONFIG] Configuration: max_context={self.config.MAX_CONTEXT_LENGTH}, model={self.config.MODEL_NAME}")
+        print(f"[OPENAI] OpenAI: {'Available' if self.llm.is_available() else 'Not configured'}")
+        print("[READY] Enhanced RAG features enabled")
     
-    def process_website(self, url: str, query: str, session_id: Optional[str] = None, use_async: bool = True) -> Dict:
+    def process_website(self, url: str, query: str, session_id: Optional[str] = None) -> Dict:
         """
         Complete pipeline: scrape website and store in vector database.
         
@@ -57,27 +57,27 @@ class RAGPipeline:
         Returns:
             Dict: Processing result with session info
         """
-        print(f"🚀 Processing website: {url}")
-        print(f"📝 Query: {query}")
-        print(f"⚡ Scraping mode: Async Parallel")
+        print(f"[START] Processing website: {url}")
+        print(f"[QUERY] Query: {query}")
+        print(f"[MODE] Scraping mode: Async Parallel")
         
         # 1. Scrape the website using async parallel scraping
         try:
-            print("🔄 Using async parallel scraping...")
+            print("[ASYNC] Using async parallel scraping...")
             scrape_result = self.scraper.scrape_parallel(url=url, query=query)
             
             if not scrape_result:
                 return {"error": "Failed to scrape website", "success": False}
                 
         except Exception as e:
-            print(f"❌ Async scraping error: {e}")
+            print(f"[ERROR] Async scraping error: {e}")
             return {"error": f"Async scraping failed: {e}", "success": False}
         
         # 2. Store in vector database
         try:
             # Use existing session ID if provided (for multi-website context)
             if session_id:
-                print(f"📌 Appending to existing session: {session_id}")
+                print(f"[APPEND] Appending to existing session: {session_id}")
                 
             session_id = self.storage_manager.store_scrape_result(
                 scrape_result,
@@ -99,7 +99,7 @@ class RAGPipeline:
             }
             
         except Exception as e:
-            print(f"❌ Storage error: {e}")
+            print(f"[ERROR] Storage error: {e}")
             return {"error": f"Storage failed: {e}", "success": False}
 
     def answer_question(self, query: str, session_id: Optional[str] = None , urls: Optional[List[str]] = []) -> Dict:
@@ -113,22 +113,22 @@ class RAGPipeline:
         Returns:
             Dict: Answer with sources and metadata
         """
-        print(f"❓ Answering question: {query}")
+        print(f"[QUESTION] Answering question: {query}")
         
         # 1. Analyze query complexity
         query_analysis = self.enhancer.analyze_query_complexity(query)
-        print(f"🔍 Query complexity: {query_analysis['complexity_score']:.2f}, type: {query_analysis['question_type']}")
+        print(f"[ANALYSIS] Query complexity: {query_analysis['complexity_score']:.2f}, type: {query_analysis['question_type']}")
         
         # 1.5 Enhance query with preprocessing
         enhanced_query = self.preprocess_query(query, question_type=query_analysis.get('question_type', 'general'), entities=query_analysis.get('entities', []))
-        print(f"🔄 Enhanced query: '{enhanced_query}'")
+        print(f"[ENHANCED] Enhanced query: '{enhanced_query}'")
         
         # 2. Process the enhanced query
         _, query_embedding = self.data_handler.process_query(enhanced_query)
         
         # 3. Search for relevant content with adaptive k
-        print(f"🔍 Searching for content in session: {session_id if session_id else 'ALL SESSIONS'}")
-        print(f"📊 Total vectors in storage: {self.storage_manager.vector_store.index.ntotal}")
+        print(f"[SEARCH] Searching for content in session: {session_id if session_id else 'ALL SESSIONS'}")
+        print(f"[VECTORS] Total vectors in storage: {self.storage_manager.vector_store.index.ntotal}")
         
         search_results = self.storage_manager.search_content(
             query_embedding, 
@@ -136,7 +136,7 @@ class RAGPipeline:
             session_id=session_id
         )
         
-        print(f"🔍 Found {len(search_results)} search results")
+        print(f"[RESULTS] Found {len(search_results)} search results")
         
         # Debug: Show source URLs of found results
         if search_results:
@@ -144,7 +144,7 @@ class RAGPipeline:
             for result in search_results:
                 if 'metadata' in result and 'source_url' in result['metadata']:
                     sources.add(result['metadata']['source_url'])
-            print(f"📚 Sources found: {', '.join(list(sources)[:3])}{'...' if len(sources) > 3 else ''}")
+            print(f" Sources found: {', '.join(list(sources)[:3])}{'...' if len(sources) > 3 else ''}")
         
         if not search_results:
             return {
@@ -159,7 +159,7 @@ class RAGPipeline:
         
         # 4. Re-rank search results for better accuracy
         enhanced_results = self.enhancer.rerank_search_results(query, search_results)
-        print(f"🔄 Re-ranked {len(enhanced_results)} results")
+        print(f"[RERANK] Re-ranked {len(enhanced_results)} results")
         
         # 5. Get enhanced context
         enhanced_context = self.enhancer.enhance_context_selection(
@@ -199,9 +199,9 @@ class RAGPipeline:
             answer_result['answer_quality'] = quality_metrics
             
             # Print quality metrics
-            print(f"📊 Answer quality score: {quality_metrics.get('overall_score', 0):.2f}")
+            print(f"[QUALITY] Answer quality score: {quality_metrics.get('overall_score', 0):.2f}")
             if quality_metrics.get('suggestions'):
-                print("💡 Quality improvement suggestions:")
+                print("[IMPROVE] Quality improvement suggestions:")
                 for suggestion in quality_metrics.get('suggestions', []):
                     print(f"  - {suggestion}")
             
@@ -233,7 +233,7 @@ class RAGPipeline:
         storage_stats = self.storage_manager.get_storage_stats()
         
         # Check OpenAI status
-        openai_status = "✅ Ready" if self.llm.is_available() else "❌ Not configured"
+        openai_status = "Ready" if self.llm.is_available() else "Not configured"
         
         config_summary = self.config.get_summary()
         llm_status = self.llm.get_status()
@@ -242,9 +242,9 @@ class RAGPipeline:
             **storage_stats,
             "pipeline_ready": True,
             "components": {
-                "scraper": "✅ Ready",
-                "storage": "✅ Ready", 
-                "data_handler": "✅ Ready",
+                "scraper": "Ready",
+                "storage": "Ready", 
+                "data_handler": "Ready",
                 "openai_llm": openai_status
             },
             "openai_available": self.llm.is_available(),
@@ -264,11 +264,11 @@ class RAGPipeline:
         Returns:
             Dict: Complete answer with sources and metadata
         """
-        print(f"🔍 Processing question: {query}")
+        print(f"[PROCESS] Processing question: {query}")
         
         # If URL provided, process it first
         if url:
-            print(f"🌐 Processing website: {url}")
+            print(f"[WEBSITE] Processing website: {url}")
             process_result = self.process_website(url, query, session_id)
             if not process_result.get('success'):
                 return {

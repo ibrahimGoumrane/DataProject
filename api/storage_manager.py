@@ -78,7 +78,7 @@ class StorageManager:
         
         for field in required_fields:
             if field not in scrape_result:
-                print(f"❌ Missing required field: {field}")
+                print(f"[ERROR] Missing required field: {field}")
                 return False
         
         # Validate data consistency
@@ -86,7 +86,7 @@ class StorageManager:
         embeddings = scrape_result['chunk_embeddings']
         
         if len(chunks) != len(embeddings):
-            print(f"❌ Data length mismatch: chunks={len(chunks)}, embeddings={len(embeddings)}")
+            print(f"[ERROR] Data length mismatch: chunks={len(chunks)}, embeddings={len(embeddings)}")
             return False
         
         return True

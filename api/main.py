@@ -16,13 +16,13 @@ def run_interactive_cli(existing_session_id=None):
     # Initialize components
 
     
-    print("\n🤖 ENHANCED RAG PIPELINE - INTERACTIVE MODE")
+    print("\n ENHANCED RAG PIPELINE - INTERACTIVE MODE")
     print("===========================================")
     print(f"Maximum context length: {config.MAX_CONTEXT_LENGTH} characters")
     print(f"Chunk size: {config.CHUNK_SIZE} characters")
     
     # Ask user about context preference
-    print("\n🔧 CONTEXT MODE SELECTION")
+    print("\n[CONFIG] CONTEXT MODE SELECTION")
     print("========================")
     print("1. Use only content from your provided URLs (focused)")
     print("2. Enhanced context mode (includes broader search)")
@@ -36,15 +36,15 @@ def run_interactive_cli(existing_session_id=None):
     use_session_only = context_choice == '1'
     
     if use_session_only:
-        print("✅ Using focused mode - only content from your URLs")
+        print("[FOCUSED] Using focused mode - only content from your URLs")
     else:
-        print("✅ Using enhanced mode - broader context search")
+        print("[ENHANCED] Using enhanced mode - broader context search")
     
     # Always use async scraping (removed choice)
     use_async = True
-    print("\n⚡ SCRAPING MODE")
-    print("===============")
-    print("✅ Using async parallel scraping - optimized for speed and efficiency")
+    print("\n[MODE] SCRAPING MODE")
+    print("===================")
+    print("[ASYNC] Using async parallel scraping - optimized for speed and efficiency")
     
     # Use existing session if provided
     session_id = existing_session_id
@@ -55,7 +55,7 @@ def run_interactive_cli(existing_session_id=None):
         # Try to get session info and any stored metadata
         session_info = pipeline.storage_manager.vector_store.get_session_info(session_id)
         if session_info:
-            print(f"\n📋 RESUMING EXISTING SESSION: {session_id}")
+            print(f"\n[RESUME] RESUMING EXISTING SESSION: {session_id}")
             
             # Get websites from session info
             if 'websites' in session_info:
@@ -74,7 +74,7 @@ def run_interactive_cli(existing_session_id=None):
                 print(f"  {i}. {website}")
     
     # Step 1: Process websites
-    print("\n📚 WEBSITE PROCESSING")
+    print("\n WEBSITE PROCESSING")
     print("===================")
     print("Enter the websites you want to process (enter an empty URL when finished):")
     
@@ -83,7 +83,7 @@ def run_interactive_cli(existing_session_id=None):
         url = input(f"\nWebsite {website_num} URL (or press Enter to finish): ")
         if not url.strip():
             if website_num == 1 and not websites_processed:
-                print("⚠️ You need to process at least one website.")
+                print("[WARNING] You need to process at least one website.")
                 continue
             else:
                 break
@@ -93,12 +93,12 @@ def run_interactive_cli(existing_session_id=None):
             query = "What is this page about?"
             print(f"Using default query: '{query}'")
             
-        print(f"\n🌐 Processing website: {url}")
-        print(f"📝 Query: {query}")
-        print(f"⚡ Mode: Async Parallel")
+        print(f"\n Processing website: {url}")
+        print(f"[QUERY] Query: {query}")
+        print(f"[MODE] Mode: Async Parallel")
         
         if session_id:
-            print(f"📌 Appending to existing session: {session_id}")
+            print(f" Appending to existing session: {session_id}")
             
         # Record start time for performance measurement
         import time
@@ -108,31 +108,30 @@ def run_interactive_cli(existing_session_id=None):
             url=url,
             query=query,
             session_id=session_id,
-            use_async=use_async
         )
         
         end_time = time.time()
         processing_time = end_time - start_time
         
         if not result.get('success', False):
-            print(f"❌ Failed to process website: {result.get('error')}")
-            print(f"⏱️ Processing time: {processing_time:.2f} seconds")
+            print(f"[ERROR] Failed to process website: {result.get('error')}")
+            print(f"[TIME] Processing time: {processing_time:.2f} seconds")
             continue
         
         session_id = result['session_id']
         websites_processed.append(url)
         
-        print(f"✅ Website processed successfully")
-        print(f"⏱️ Processing time: {processing_time:.2f} seconds")
-        print(f"📊 Performance: Async Parallel scraping")
-        print(f"🆔 Session ID: {result['session_id']}")
-        print(f"📦 Chunks stored: {result['chunks_stored']}")
+        print(f"[SUCCESS] Website processed successfully")
+        print(f"[TIME] Processing time: {processing_time:.2f} seconds")
+        print(f"[PERF] Performance: Async Parallel scraping")
+        print(f"[SESSION] Session ID: {result['session_id']}")
+        print(f"[CHUNKS] Chunks stored: {result['chunks_stored']}")
         
         # Show performance benefit of parallel scraping
         if use_async and processing_time > 0:
             estimated_sequential_time = processing_time * 2.5  # Rough estimate
-            print(f"📈 Estimated sequential time: {estimated_sequential_time:.2f}s")
-            print(f"🚀 Speed improvement: ~{estimated_sequential_time/processing_time:.1f}x faster")
+            print(f"[EST] Estimated sequential time: {estimated_sequential_time:.2f}s")
+            print(f"[SPEED] Speed improvement: ~{estimated_sequential_time/processing_time:.1f}x faster")
         
         website_num += 1
         
@@ -143,7 +142,7 @@ def run_interactive_cli(existing_session_id=None):
                 break
     
     # Step 2: Display summary of processed websites
-    print("\n📋 PROCESSED WEBSITES SUMMARY")
+    print("\nPROCESSED WEBSITES SUMMARY")
     print("===========================")
     print(f"Total websites processed: {len(websites_processed)}")
     for i, website in enumerate(websites_processed, 1):
@@ -155,15 +154,15 @@ def run_interactive_cli(existing_session_id=None):
     if use_async:
         print("\n⚡ ASYNC SCRAPING INFO")
         print("====================")
-        print("✅ Parallel scraping was used for faster processing")
-        print("🔧 Configuration:")
+        print(" Parallel scraping was used for faster processing")
+        print(" Configuration:")
         print(f"  - Max concurrent: {config.SCRAPER_MAX_CONCURRENT}")
         print(f"  - Batch size: {config.SCRAPER_BATCH_SIZE}")
         print(f"  - Async timeout: {config.SCRAPER_ASYNC_TIMEOUT}s")
-        print("💡 Tip: You can adjust these settings via environment variables")
+        print(" Tip: You can adjust these settings via environment variables")
     
     # Step 3: Ask questions
-    print("\n❓ ASK QUESTIONS")
+    print("\n ASK QUESTIONS")
     print("==============")
     print("Now you can ask questions about the processed websites (enter an empty question to exit):")
     
@@ -173,7 +172,7 @@ def run_interactive_cli(existing_session_id=None):
         if not query.strip():
             break
             
-        print(f"\n🔍 Searching for answer to: {query}")
+        print(f"\n[SEARCH] Searching for answer to: {query}")
         
         # Use session-only search if user chose focused mode
         search_session_id = session_id if use_session_only else None
@@ -185,7 +184,7 @@ def run_interactive_cli(existing_session_id=None):
         print(answer.get('answer', 'No answer available'))
         
         # Print the answer metadata
-        print(f"\n📊 CONTEXT USAGE:")
+        print(f"\n CONTEXT USAGE:")
         print(f"Context length: {answer.get('context_used', 0)} characters")
         print(f"Sources: {len(answer.get('sources', []))} chunks from {len(set([s.get('source_url', '') for s in answer.get('sources', [])]))} websites")
         print(f"Search mode: {'Session-only' if use_session_only else 'All content'}")
@@ -220,13 +219,13 @@ def run_interactive_cli(existing_session_id=None):
                 break
     
     # Exit message
-    print("\n👋 Thank you for using the Enhanced RAG Pipeline!")
+    print("\n Thank you for using the Enhanced RAG Pipeline!")
     print(f"Session ID: {session_id} (Save this if you want to resume this session later)")
     
     return session_id
 
 if __name__ == "__main__":
-    print("\n🤖 Enhanced RAG Pipeline")
+    print("\n Enhanced RAG Pipeline")
     print("========================")
     print("1. Start new session")
     print("2. Resume existing session")
@@ -245,7 +244,7 @@ if __name__ == "__main__":
             # Check if session exists
             session_info = pipeline.storage_manager.vector_store.get_session_info(session_id)
             if session_info:
-                print(f"✅ Session found: {session_id}")
+                print(f"[SESSION] Session found: {session_id}")
                 if 'websites' in session_info and session_info['websites']:
                     print(f"Websites in session: {len(session_info['websites'])}")
                     for i, website in enumerate(session_info['websites'], 1):
@@ -255,10 +254,10 @@ if __name__ == "__main__":
                 print(f"Created: {session_info.get('storage_timestamp', 'Unknown')}")
                 run_interactive_cli(session_id)
             else:
-                print(f"❌ Session not found: {session_id}")
+                print(f" Session not found: {session_id}")
         else:
-            print("❌ No session ID provided.")
+            print(" No session ID provided.")
     elif choice == "3":
-        print("👋 Goodbye!")
+        print(" Goodbye!")
     else:
         print("Invalid choice. Please run again and select a valid option.")

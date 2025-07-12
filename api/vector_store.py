@@ -43,27 +43,27 @@ class VectorStore:
         # Load existing data if available
         self._load_existing_data()
         
-        print(f"📦 VectorStore initialized with {self.index.ntotal} embeddings")
+        print(f"[INIT] VectorStore initialized with {self.index.ntotal} embeddings")
     
     def _load_existing_data(self):
         """Load existing FAISS index and metadata if they exist."""
         try:
             if os.path.exists(self.index_path):
                 self.index = faiss.read_index(self.index_path)
-                print(f"✅ Loaded existing FAISS index with {self.index.ntotal} vectors")
+                print(f"[LOADED] Existing FAISS index with {self.index.ntotal} vectors")
             
             if os.path.exists(self.metadata_path):
                 with open(self.metadata_path, 'rb') as f:
                     self.metadata = pickle.load(f)
-                print(f"✅ Loaded {len(self.metadata)} metadata entries")
+                print(f"[LOADED] {len(self.metadata)} metadata entries")
             
             if os.path.exists(self.chunks_path):
                 with open(self.chunks_path, 'rb') as f:
                     self.chunks = pickle.load(f)
-                print(f"✅ Loaded {len(self.chunks)} text chunks")
+                print(f"[LOADED] {len(self.chunks)} text chunks")
                     
         except Exception as e:
-            print(f"⚠️ Error loading existing data: {e}")
+            print(f"[WARNING] Error loading existing data: {e}")
             print("Starting with empty storage")
     
     def add_scrape_session(self, scrape_result: Dict, session_id: Optional[str] = None) -> str:
@@ -85,11 +85,11 @@ class VectorStore:
         is_new_session = session_id is None
         if not session_id:
             session_id = str(uuid.uuid4())
-            print(f"💾 Creating new scrape session: {session_id}")
+            print(f"[CREATE] New scrape session: {session_id}")
         else:
-            print(f"💾 Appending to existing session: {session_id}")
+            print(f"[APPEND] To existing session: {session_id}")
         
-        print(f"📊 Chunks to store: {len(scrape_result['processed_chunks'])}")
+        print(f"[INFO] Chunks to store: {len(scrape_result['processed_chunks'])}")
         
         # Normalize embeddings for cosine similarity
         embeddings = scrape_result['chunk_embeddings']
@@ -120,7 +120,7 @@ class VectorStore:
         # Persist to disk
         self._save_to_disk()
         
-        print(f"✅ Session stored: {len(scrape_result['processed_chunks'])} chunks added")
+        print(f"[SUCCESS] Session stored: {len(scrape_result['processed_chunks'])} chunks added")
         return session_id
     
     def _normalize_embeddings(self, embeddings: np.ndarray) -> np.ndarray:
@@ -175,7 +175,7 @@ class VectorStore:
         
         # Debug logging
         if session_id:
-            print(f"🔍 Session {session_id}: Found {len(results)} results out of {self.index.ntotal} total vectors")
+            print(f"[SEARCH] Session {session_id}: Found {len(results)} results out of {self.index.ntotal} total vectors")
         
         return results
     
@@ -265,10 +265,10 @@ class VectorStore:
             with open(self.chunks_path, 'wb') as f:
                 pickle.dump(self.chunks, f)
                 
-            print(f"💾 Data persisted: {self.index.ntotal} vectors, {len(self.chunks)} chunks")
+            print(f"[SAVED] Data persisted: {self.index.ntotal} vectors, {len(self.chunks)} chunks")
             
         except Exception as e:
-            print(f"❌ Error saving to disk: {e}")
+            print(f"[ERROR] Error saving to disk: {e}")
     
     def get_session_info(self, session_id: str) -> Optional[Dict]:
         """Get information about a specific session."""
@@ -290,7 +290,7 @@ class VectorStore:
         """Delete a specific session and its data."""
         # This is complex with FAISS - for now, mark as deleted
         # Full implementation would require rebuilding the index
-        print(f"⚠️ Session deletion not fully implemented: {session_id}")
+        print(f"[WARNING] Session deletion not fully implemented: {session_id}")
         return False
     
     def get_stats(self) -> Dict:
@@ -317,7 +317,7 @@ class VectorStore:
             bool: True if cleared successfully, False otherwise
         """
         if not os.path.exists(self.sessions_path):
-            print(f"⚠️ No sessions found to clear for ID: {session_id}")
+            print(f"[WARNING] No sessions found to clear for ID: {session_id}")
             return False
         
         # Load existing sessions
@@ -343,10 +343,10 @@ class VectorStore:
             # Save updated data
             self._save_to_disk()
             
-            print(f"✅ Cleared session {session_id} and associated data")
+            print(f"[CLEARED] Cleared session {session_id} and associated data")
             return True
         
-        print(f"⚠️ Session ID {session_id} not found")
+        print(f"[WARNING] Session ID {session_id} not found")
         return False
 
     def get_session_metadata(self, session_id: str) -> List[Dict]:

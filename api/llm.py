@@ -123,7 +123,7 @@ class LLM:
                 }
                 
         except Exception as e:
-            print(f"❌ LLM generation error: {e}")
+            print(f"[ERROR] LLM generation error: {e}")
             return {
                 "query": query,
                 "answer": f"Sorry, I encountered an error generating the answer: {str(e)}",
