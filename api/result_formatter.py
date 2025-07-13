@@ -102,7 +102,6 @@ class ResultFormatter:
 - **Confidence:** {result.get('confidence', 0):.2f}
 - **LLM Model:** {result.get('llm_model', 'N/A')}
 - **LLM Available:** {'Yes' if result.get('llm_available') else 'No'}
-- **Tokens Used:** {result.get('tokens_used', 'N/A')}
 - **Session ID:** {result.get('session_id', 'N/A')}
 - **Context Used:** {result.get('context_used', 'N/A')} characters
 - **Enhancement Applied:** {'Yes' if result.get('enhancement_applied') else 'No'}
@@ -337,9 +336,6 @@ class ResultFormatter:
                     </div>
                     <div class="metadata-item">
                         <strong>LLM Available:</strong> {'Yes' if result.get('llm_available') else 'No'}
-                    </div>
-                    <div class="metadata-item">
-                        <strong>Tokens Used:</strong> {result.get('tokens_used', 'N/A')}
                     </div>
                     <div class="metadata-item">
                         <strong>Session ID:</strong> {result.get('session_id', 'N/A')[:8] if result.get('session_id') else 'N/A'}...

@@ -17,14 +17,14 @@ class RAGConfig:
     
     def __init__(self):
         """Initialize configuration from environment variables."""
-        # OpenAI Configuration
-        self.OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+        # Ollama Configuration
+        self.OLLAMA_API_KEY = os.getenv('OLLAMA_API_KEY')
         
         # RAG Pipeline Settings
         self.MAX_CONTEXT_LENGTH = self._get_int('RAG_MAX_CONTEXT_LENGTH', 10000)
         self.MAX_TOKENS = self._get_int('RAG_MAX_TOKENS', 10000)
         self.TEMPERATURE = self._get_float('RAG_TEMPERATURE', 0.7)
-        self.MODEL_NAME = os.getenv('RAG_MODEL_NAME', 'o4-mini-2025-04-16')
+        self.MODEL_NAME = os.getenv('RAG_MODEL_NAME', 'deepseek-r1:1.5b')
         self.TOP_K_RESULTS = self._get_int('RAG_TOP_K_RESULTS', 10)
         
         # Data Processing Settings
@@ -81,8 +81,8 @@ class RAGConfig:
         errors = []
         
         # Check critical configurations
-        if not self.OPENAI_API_KEY:
-            warnings.append("OPENAI_API_KEY not set - OpenAI features will be disabled")
+        if not self.OLLAMA_API_KEY:
+            warnings.append("OLLAMA_API_KEY not set - Ollama features will be disabled")
         
         if self.MAX_CONTEXT_LENGTH < 100:
             warnings.append(f"MAX_CONTEXT_LENGTH ({self.MAX_CONTEXT_LENGTH}) is very low")
@@ -110,8 +110,8 @@ class RAGConfig:
             dict: Configuration summary
         """
         return {
-            "openai": {
-                "api_key_set": bool(self.OPENAI_API_KEY),
+            "ollama": {
+                "api_key_set": bool(self.OLLAMA_API_KEY),
                 "model": self.MODEL_NAME,
                 "max_tokens": self.MAX_TOKENS,
                 "temperature": self.TEMPERATURE

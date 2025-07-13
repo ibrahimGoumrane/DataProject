@@ -74,7 +74,7 @@ User calls answer_question with query and session ID
 │   │   ├── Selected context (up to 10,000 chars)
 │   │   ├── Source information
 │   │   └── Type-specific instructions
-│   ├── Sends prompt to OpenAI with system instructions
+│   ├── Sends prompt to Ollama locally running model (deepseek-r1:1.5b) with system instructions
 │   └── Retrieves and processes response
 │
 └── 7. Returns comprehensive answer to user
@@ -127,7 +127,7 @@ The key part of this process is how the LLM receives the context data:
    ...more role description...
    ```
 
-4. **API Call**: The complete prompt (system prompt + enhanced prompt with context) is sent to the OpenAI API with the configured parameters (temperature, max tokens, etc.).
+4. **API Call**: The complete prompt (system prompt + enhanced prompt with context) is sent to the Ollama API with the configured parameters (temperature, max tokens, etc.).
 
 5. **Response Handling**: The LLM's response is processed, quality metrics are calculated, and the full result is returned to the user.
 

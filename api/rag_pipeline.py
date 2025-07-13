@@ -12,7 +12,7 @@ class RAGPipeline:
     Complete RAG pipeline: Scrape -> Store -> Retrieve -> Generate
     """
     
-    def __init__(self, storage_dir=None, openai_api_key=None, config_file='.env'):
+    def __init__(self, storage_dir=None, OLLAMA_API_KEY=None, config_file='.env'):
         """Initialize the RAG pipeline."""
         # Load configuration from .env file if it exists
         self.config = RAGConfig()
@@ -36,12 +36,12 @@ class RAGPipeline:
         self.storage_manager = StorageManager(storage_dir or self.config.STORAGE_DIR)
         
         # Initialize LLM and enhancer
-        self.llm = LLM(openai_api_key)
+        self.llm = LLM(OLLAMA_API_KEY)
         self.enhancer = RAGEnhancer()
         
         print("[RAG] RAG Pipeline initialized")
         print(f"[CONFIG] Configuration: max_context={self.config.MAX_CONTEXT_LENGTH}, model={self.config.MODEL_NAME}")
-        print(f"[OPENAI] OpenAI: {'Available' if self.llm.is_available() else 'Not configured'}")
+        print(f"[OLLAMA] Ollama: {'Available' if self.llm.is_available() else 'Not configured'}")
         print("[READY] Enhanced RAG features enabled")
     
     def process_website(self, url: str, query: str, session_id: Optional[str] = None) -> Dict:
@@ -232,8 +232,8 @@ class RAGPipeline:
         """Get comprehensive pipeline statistics."""
         storage_stats = self.storage_manager.get_storage_stats()
         
-        # Check OpenAI status
-        openai_status = "Ready" if self.llm.is_available() else "Not configured"
+        # Check Ollama status
+        ollama_status = "Ready" if self.llm.is_available() else "Not configured"
         
         config_summary = self.config.get_summary()
         llm_status = self.llm.get_status()
@@ -245,9 +245,9 @@ class RAGPipeline:
                 "scraper": "Ready",
                 "storage": "Ready", 
                 "data_handler": "Ready",
-                "openai_llm": openai_status
+                "ollama_llm": ollama_status
             },
-            "openai_available": self.llm.is_available(),
+            "ollama_available": self.llm.is_available(),
             "configuration": config_summary,
             "llm_status": llm_status
         }

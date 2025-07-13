@@ -5,14 +5,14 @@ Handles all language model interactions including prompt engineering and respons
 
 from typing import Dict, List, Optional
 from config import RAGConfig
-from openai import OpenAI
+import ollama
 
 
 
 class LLM:
     """
     Language Model handler for the RAG pipeline.
-    Manages OpenAI API interactions, prompt engineering, and response generation.
+    Manages Ollama API interactions, prompt engineering, and response generation.
     """
     
     def __init__(self, api_key: Optional[str] = None):
@@ -20,18 +20,17 @@ class LLM:
         Initialize the LLM with configuration.
         
         Args:
-            api_key (str, optional): OpenAI API key. If not provided, uses config.
+            api_key (str, optional): Ollama API key. If not provided, uses config.
         """
         self.config = RAGConfig()
         
-        # Initialize OpenAI client
-        self.openai_client = OpenAI(api_key=api_key or self.config.OPENAI_API_KEY)
+        # Initialize Ollama client
         self.modal = self.config.MODEL_NAME
 
     def is_available(self) -> bool:
         """Check if LLM is available for use."""
-        return self.openai_client is not None
-    
+        return ollama is not None
+
     def generate_response(self, prompt: str, system_prompt: Optional[str] = None) -> Dict:
         """
         Generate a response from the language model.
@@ -45,7 +44,7 @@ class LLM:
         """
         if not self.is_available():
             return {
-                "response": "LLM not available. Please configure OpenAI API key.",
+                "response": "LLM not available. Please configure Ollama API key.",
                 "success": False,
                 "error": "LLM not configured"
             }
@@ -55,17 +54,15 @@ class LLM:
             if system_prompt:
                 messages.append({"role": "system", "content": system_prompt})
             messages.append({"role": "user", "content": prompt})
-            
-            response = self.openai_client.responses.create(
+
+            response = ollama.chat(
                 model=self.modal,
-                input=messages,
-                max_output_tokens=self.config.MAX_TOKENS
+                messages=messages
             )
             return {
-                "response": response.output_text.strip(),
+                "response": response['message']['content'].strip(),
                 "success": True,
                 "model": self.config.MODEL_NAME,
-                "tokens_used": response.usage.total_tokens if response.usage else None
             }
             
         except Exception as e:
@@ -77,7 +74,7 @@ class LLM:
     
     def generate_answer_with_context(self, query: str, context: str, search_results: List[Dict]) -> Dict:
         """
-        Generate an answer using OpenAI LLM with enhanced prompt and context.
+        Generate an answer using Ollama LLM with enhanced prompt and context.
         
         Args:
             query (str): User question
@@ -90,7 +87,7 @@ class LLM:
         if not self.is_available():
             return {
                 "query": query,
-                "answer": "LLM not available. Please configure OpenAI API key.",
+                "answer": "LLM not available. Please configure Ollama API key.",
                 "confidence": 0.0,
                 "llm_available": False,
                 "error": "LLM not configured"
@@ -111,7 +108,6 @@ class LLM:
                     "confidence": self._calculate_confidence(search_results),
                     "llm_model": response_result['model'],
                     "llm_available": True,
-                    "tokens_used": response_result.get('tokens_used')
                 }
             else:
                 return {
@@ -261,7 +257,7 @@ Remember: You are primarily a context interpreter, not a general knowledge provi
         """
         return {
             "available": self.is_available(),
-            "api_key_configured": bool(self.config.OPENAI_API_KEY),
+            "api_key_configured": bool(self.config.OLLAMA_API_KEY),
             "model": self.config.MODEL_NAME,
             "max_tokens": self.config.MAX_TOKENS,
             "temperature": self.config.TEMPERATURE,

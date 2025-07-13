@@ -4,8 +4,8 @@ requests>=2.31.0
 beautifulsoup4>=4.12.0
 
 faiss-cpu>=1.7.4
-openai>=1.0.0
 html2text>=2020.1.16
+ollama>=0.0.1  # For advanced text processing
 
 # JavaScript rendering - Playwright (reliable and modern)
 playwright>=1.40.0
@@ -19,6 +19,7 @@ lxml>=4.9.3
 
 nltk>=3.8.1
 sentence-transformers>=2.2.0
+# einops>=0.4.0  # For efficient data handling
 
 # Enhanced formatting support
 markdown>=3.4.0
@@ -26,8 +27,6 @@ markdown>=3.4.0
 # Async Scraping Requirements
 aiohttp>=3.8.0
 
-# Async Playwright (optional, for JS-heavy sites)
-playwright>=1.40.0
 
 # Additional async utilities
 asyncio-throttle>=1.0.0  # For rate limiting
